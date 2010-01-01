@@ -136,6 +136,29 @@ while data = sock.gets
               sock.puts ":NickServ NOTICE #{origin} :Invalid password for \002#{origin}\002."
             end
           
+          when 'register'
+            dn = config['ldap']['auth_pattern'].gsub('{username}', origin)
+            dn += ",#{config['ldap']['base']}"
+            puts dn
+            attrs = {
+              :cn => origin,
+              :userPassword => args.shift,
+              :mail => args.shift,
+              :objectclass => ['x-bit-ircUser', 'top'],
+              :uid => origin
+            }
+            
+            p LDAP.master_bind
+            if LDAP.ldap.add :dn => dn, :attributes => attrs
+              sock.puts ":OperServ ! #{config['services-channel']} :REGISTER: \002#{origin}\002 to \002#{attrs[:mail]}\002"
+              sock.puts ":NickServ SVS2MODE #{origin} +rd #{Time.now.to_i}"
+              sock.puts ":NickServ NOTICE #{origin} :\002#{origin}\002 is not registered to \002#{attrs[:mail]}\002, with the password \002#{attrs[:userPassword]}\002."
+            else
+              sock.puts ":NickServ NOTICE #{origin} :An error occured while creating your account."
+              puts "Result: #{LDAP.ldap.get_operation_result.code}"
+              puts "Message: #{LDAP.ldap.get_operation_result.message}"
+            end
+          
         end
       end
     
