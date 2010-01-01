@@ -2,34 +2,24 @@ require 'yaml'
 require 'socket'
 
 config = YAML.load open('bitserv.yaml')
+me = config['hostname']
 
-sock = TCPSocket.new(config['uplink-hostname'], config['uplink-port'].to_i)
+sock = TCPSocket.new(config['uplink']['hostname'], config['uplink']['port'].to_i)
 
-sock.puts "PASS #{config['uplink-password']}"
+bots = %w{NickServ ChanServ MemoServ OperServ Global}
+
+sock.puts "PASS #{config['uplink']['password']}"
 sock.puts "PROTOCTL TOKEN NICKv2 VHP NICKIP UMODE2 SJOIN SJOIN2 SJ3 NOQUIT TKLEXT"
-sock.puts "SERVER #{config['hostname']} 1 :#{config['description']}"
-sock.puts ":#{config['hostname']} KILL NickServ :#{config['hostname']} (Attempt to use service nick)"
-sock.puts "NICK NickServ 1 1262302719 NickServ #{config['hostname']} #{config['hostname']} 0 +ioS * :Nickname Services"
-sock.puts ":#{config['hostname']} KILL BotServ :#{config['hostname']} (Attempt to use service nick)"
-sock.puts "NICK BotServ 1 1262302719 BotServ #{config['hostname']} #{config['hostname']} 0 +ioS * :Bot Services"
-sock.puts ":#{config['hostname']} KILL ChanServ :#{config['hostname']} (Attempt to use service nick)"
-sock.puts "NICK ChanServ 1 1262302719 ChanServ #{config['hostname']} #{config['hostname']} 0 +ioS * :Channel Services"
-sock.puts ":#{config['hostname']} KILL OperServ :#{config['hostname']} (Attempt to use service nick)"
-sock.puts "NICK OperServ 1 1262302719 OperServ #{config['hostname']} #{config['hostname']} 0 +ioS * :Operator Services"
-sock.puts ":#{config['hostname']} KILL Global :#{config['hostname']} (Attempt to use service nick)"
-sock.puts "NICK Global 1 1262302719 Global #{config['hostname']} #{config['hostname']} 0 +ioS * :Network Announcements"
-sock.puts ":#{config['hostname']} KILL MemoServ :#{config['hostname']} (Attempt to use service nick)"
-sock.puts "NICK MemoServ 1 1262302719 MemoServ #{config['hostname']} #{config['hostname']} 0 +ioS * :Memo Services"
-sock.puts "PING :#{config['hostname']}"
+sock.puts "SERVER #{me} 1 :#{config['description']}"
 
-sleep 0.5
-sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@NickServ"
-sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@BotServ"
-sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@ChanServ"
-sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@OperServ"
-sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@Global"
-sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@MemoServ"
-sock.puts ":#{config['hostname']} GLOBOPS :Finished synchronizing with network in -1 ms."
+bots.each do |bot|
+  sock.puts ":#{me} KILL #{bot} :#{me} (Attempt to use service nick)"
+  sock.puts "NICK #{bot} 1 #{Time.now.to_i} #{bot} #{me} #{me} 0 +ioS * :Your standard #{bot}, minus any features"
+end
+
+sock.puts "PING :#{me}"
+
+joined_chan = false
 
 while data = sock.gets
   parts = data.split ' :', 2
@@ -41,6 +31,7 @@ while data = sock.gets
   
   command = args.shift
   case command
+  
     when 'NOTICE'
       puts args.last
       
@@ -58,26 +49,39 @@ while data = sock.gets
     
     when '&' # nick, server numerc?, timestamp, ident, ip, server, servhops?, umode, cloak, base64, realname
       puts "Remote client connected: #{args[0]}"
-      sock.puts ":NickServ NOTICE #{args[0]} :Hey there."
+      #sock.puts ":NickServ NOTICE #{args[0]} :Hey there."
     
     when '~' # timestamp, channel, list
       puts "Got user list for #{args[1]}: #{args[2]}"
-      sock.puts ":#{config['hostname']} SJOIN #{args[0]} #{args[1]} + :@ChanServ"
+      sock.puts ":#{me} SJOIN #{args[0]} #{args[1]} + :@ChanServ"
+      if args[1] == config['services-channel']
+        (bots - ['ChanServ']).each do |bot|
+          sock.puts ":#{me} SJOIN #{args[0]} #{args[1]} + :@#{bot}"
+        end
+        joined_chan = true
+      end
     
     when ')' # channel, setter, when, topic
       puts "Topic for #{args[0]}: #{args.last}"
     
     when 'AO' # 10 1262304315 2309 MD5:1f93b28198e5c6a138cf22cf14883316 0 0 0 :Danopia
-  
+      
+    
     when 'ES'
-      puts "Server done syncing."
+      unless joined_chan
+        sock.puts ":#{me} ~ #{Time.now.to_i} #{config['services-channel']} :@#{bots.join ' @'}"
+        joined_chan = true
+      end
+      
+      sock.puts ":#{me} GLOBOPS :Finished synchronizing with network in -0.01 ms."
+      puts "Done syncing."
     
     when '9'
       puts "Server ponged."
     
     when '8'
       puts "Server pinged."
-      sock.puts ":#{config['hostname']} 9 #{config['hostname']} :#{args.last}"
+      sock.puts ":#{me} 9 #{me} :#{args.last}"
     
     when 'GLOBOPS'
       puts "Global op message: #{args.last}"
