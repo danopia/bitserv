@@ -9,3 +9,14 @@ description: BitServ IRC Services
 
 # Use quotes!
 services-channel: "#services"
+
+ldap:
+  hostname: ldap.eighthbit.net
+  port: 389
+  
+  master_bind:
+    node: uid=services,ou=irc
+    password: MASTER PASSWORD HERE
+  
+  base: dc=eighthbit,dc=net
+  auth_pattern: uid={username},ou=users
