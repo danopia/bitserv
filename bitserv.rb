@@ -50,8 +50,8 @@ require 'bots/nickserv'
 require 'bots/chanserv'
 
 bots = {
-  'NickServ' => BitServ::NickServ.new,
-  'ChanServ' => BitServ::ChanServ.new,
+  'nickserv' => BitServ::NickServ.new,
+  'chanserv' => BitServ::ChanServ.new,
 }
 
 sock.puts "PASS #{config['uplink']['password']}"
@@ -128,14 +128,14 @@ while data = sock.gets
         sock.puts ":ChanServ ! #{args[0]} :ow"
       end
       
-      bots[args[0]].run_command origin, args[1].split if bots.has_key? args[0]
+      bots[args[0].downcase].run_command origin, args[1].split if bots.has_key? args[0].downcase
     
     when 'AO' # 10 1262304315 2309 MD5:1f93b28198e5c6a138cf22cf14883316 0 0 0 :Danopia
       
     
     when 'ES'
       unless joined_chan
-        sock.puts ":#{me} ~ #{Time.now.to_i} #{config['services-channel']} :@#{bots.join ' @'}"
+        sock.puts ":#{me} ~ #{Time.now.to_i} #{config['services-channel']} :@#{bots.keys.join ' @'}"
         joined_chan = true
       end
       
