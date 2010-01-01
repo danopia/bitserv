@@ -39,7 +39,7 @@ module BitServ
     end
     
     def initialize
-      @nick = self.class.nick
+      @nick = self.class.nick.split('::').last
     end
     
     def emit event, args
@@ -52,26 +52,26 @@ module BitServ
       command = params.shift.upcase
       
       if command == 'HELP'
-        $sock.puts ":NickServ B #{origin} :****** \002#{@nick} Help\002 ******"
-        $sock.puts ":NickServ B #{origin} :\002\002"
-        $sock.puts ":NickServ B #{origin} :The following commands are available:"
+        $sock.puts ":#{@nick} B #{origin} :****** \002#{@nick} Help\002 ******"
+        $sock.puts ":#{@nick} B #{origin} :\002\002"
+        $sock.puts ":#{@nick} B #{origin} :The following commands are available:"
         self.class.commands.each_pair do |cmd, data|
-          $sock.puts ":NickServ B #{origin} :\002#{cmd.ljust 16}\002#{data[:description]}"
+          $sock.puts ":#{@nick} B #{origin} :\002#{cmd.ljust 16}\002#{data[:description]}"
         end
-        $sock.puts ":NickServ B #{origin} :\002\002"
-        $sock.puts ":NickServ B #{origin} :***** \002End of Help\002 *****"
+        $sock.puts ":#{@nick} B #{origin} :\002\002"
+        $sock.puts ":#{@nick} B #{origin} :***** \002End of Help\002 *****"
         
       elsif self.class.commands.has_key? command
         data = self.class.commands[command]
         if data[:min_params] > params.size
-          $sock.puts ":NickServ B #{origin} :Insufficient parameters for \002#{command}\002."
-          $sock.puts ":NickServ B #{origin} :Syntax: #{command} <#{data[:params].join '> <'}>"
+          $sock.puts ":#{@nick} B #{origin} :Insufficient parameters for \002#{command}\002."
+          $sock.puts ":#{@nick} B #{origin} :Syntax: #{command} <#{data[:params].join '> <'}>"
         else
           data[:block].call origin, params
         end
       
       else
-        $sock.puts ":NickServ B #{origin} :Invalid command. Use \002/msg #{@nick} help\002 for a command listing."
+        $sock.puts ":#{@nick} B #{origin} :Invalid command. Use \002/msg #{@nick} help\002 for a command listing."
       end
           
     end
