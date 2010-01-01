@@ -43,14 +43,22 @@ end
 
 
 sock = TCPSocket.new(config['uplink']['hostname'], config['uplink']['port'].to_i)
+$sock = sock
 
-bots = %w{NickServ ChanServ MemoServ OperServ Global}
+require 'bot'
+require 'bots/nickserv'
+require 'bots/chanserv'
+
+bots = {
+  'NickServ' => BitServ::NickServ.new,
+  'ChanServ' => BitServ::ChanServ.new,
+}
 
 sock.puts "PASS #{config['uplink']['password']}"
 sock.puts "PROTOCTL TOKEN NICKv2 VHP NICKIP UMODE2 SJOIN SJOIN2 SJ3 NOQUIT TKLEXT"
 sock.puts "SERVER #{me} 1 :#{config['description']}"
 
-bots.each do |bot|
+bots.each_key do |bot|
   sock.puts ":#{me} KILL #{bot} :#{me} (Attempt to use service nick)"
   sock.puts "NICK #{bot} 1 #{Time.now.to_i} #{bot} #{me} #{me} 0 +ioS * :Your standard #{bot}, minus any features"
 end
@@ -98,7 +106,7 @@ while data = sock.gets
       sock.puts ":#{me} SJOIN #{args[0]} #{args[1]} + :@ChanServ" unless stamps[args[1]]
       stamps[args[1]] = args[0]
       if args[1] == config['services-channel']
-        (bots - ['ChanServ']).each do |bot|
+        (bots.keys - ['ChanServ']).each do |bot|
           sock.puts ":#{me} SJOIN #{args[0]} #{args[1]} + :@#{bot}"
         end
         joined_chan = true
@@ -120,47 +128,7 @@ while data = sock.gets
         sock.puts ":ChanServ ! #{args[0]} :ow"
       end
       
-      if args[0] == 'NickServ'
-        params = args[1].split
-        cmd = params.shift.downcase
-        case cmd
-          
-          when 'id', 'identify'
-            if LDAP.user_bind origin, params.shift
-              #sock.puts ":OperServ PRIVMSG #services :SOPER: #{origin} as #{origin}"
-              sock.puts ":NickServ NOTICE #{origin} :You are now identified for \002#{origin}\002."
-              #sock.puts ":NickServ NOTICE danopia :2 failed logins since last login."
-              #sock.puts ":NickServ NOTICE danopia :Last failed attempt from: danopia!danopia@danopia-F985FA2D on Jan 01 00:25:26 2010."
-              sock.puts ":NickServ SVS2MODE #{origin} +rd #{Time.now.to_i}"
-            else
-              sock.puts ":NickServ NOTICE #{origin} :Invalid password for \002#{origin}\002."
-            end
-          
-          when 'register'
-            dn = config['ldap']['auth_pattern'].gsub('{username}', origin)
-            dn += ",#{config['ldap']['base']}"
-            puts dn
-            attrs = {
-              :cn => origin,
-              :userPassword => args.shift,
-              :mail => args.shift,
-              :objectclass => ['x-bit-ircUser', 'top'],
-              :uid => origin
-            }
-            
-            p LDAP.master_bind
-            if LDAP.ldap.add :dn => dn, :attributes => attrs
-              sock.puts ":OperServ ! #{config['services-channel']} :REGISTER: \002#{origin}\002 to \002#{attrs[:mail]}\002"
-              sock.puts ":NickServ SVS2MODE #{origin} +rd #{Time.now.to_i}"
-              sock.puts ":NickServ NOTICE #{origin} :\002#{origin}\002 is not registered to \002#{attrs[:mail]}\002, with the password \002#{attrs[:userPassword]}\002."
-            else
-              sock.puts ":NickServ NOTICE #{origin} :An error occured while creating your account."
-              puts "Result: #{LDAP.ldap.get_operation_result.code}"
-              puts "Message: #{LDAP.ldap.get_operation_result.message}"
-            end
-          
-        end
-      end
+      bots[args[0]].run_command origin, args[1].split if bots.has_key? args[0]
     
     when 'AO' # 10 1262304315 2309 MD5:1f93b28198e5c6a138cf22cf14883316 0 0 0 :Danopia
       

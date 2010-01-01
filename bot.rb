@@ -10,20 +10,25 @@ module BitServ
       if nick
         @nick = nick # DSL set
       else
-        @nick ||= nil # get
+        @nick ||= self.name.to_s # get
       end
     end
     
-    def self.command name, description, *params, &blck
+    def self.command names, description, *params, &blck
       min_params = params.size
       min_params = params.shift if params.first.is_a? Fixnum
       
-      @@commands[name.upcase] = {
+      data = {
         :description => description,
         :params => params,
         :min_params => min_params,
         :block => blck
       }
+      
+      names = [names] if names.is_a? String
+      names.each do |name|
+        commands[name.upcase] = data
+      end
     end
     
     
