@@ -42,26 +42,26 @@ module BitServ
       command = params.shift.upcase
       
       if command == 'HELP'
-        $sock.puts ":NickServ ! #{origin} :****** \002#{@nick} Help\002 ******"
-        $sock.puts ":NickServ ! #{origin} :\002\002"
-        $sock.puts ":NickServ ! #{origin} :The following commands are available:"
+        $sock.puts ":NickServ B #{origin} :****** \002#{@nick} Help\002 ******"
+        $sock.puts ":NickServ B #{origin} :\002\002"
+        $sock.puts ":NickServ B #{origin} :The following commands are available:"
         @@commands.each_pair do |cmd, data|
-          $sock.puts ":NickServ ! #{origin} :\002#{cmd.ljust 16}\002#{data[:description]}"
+          $sock.puts ":NickServ B #{origin} :\002#{cmd.ljust 16}\002#{data[:description]}"
         end
-        $sock.puts ":NickServ ! #{origin} :\002\002"
-        $sock.puts ":NickServ ! #{origin} :***** \002End of Help\002 *****"
+        $sock.puts ":NickServ B #{origin} :\002\002"
+        $sock.puts ":NickServ B #{origin} :***** \002End of Help\002 *****"
         
       elsif @@commands.has_key? command
         data = @@commands[command]
         if data[:min_params] < params.size
-          $sock.puts ":NickServ ! #{origin} :Insufficient parameters for \002#{command}\002."
-          $sock.puts ":NickServ ! #{origin} :Syntax: #{command} <#{data[:params].join '> <'}>"
+          $sock.puts ":NickServ B #{origin} :Insufficient parameters for \002#{command}\002."
+          $sock.puts ":NickServ B #{origin} :Syntax: #{command} <#{data[:params].join '> <'}>"
         else
           data[:block].call origin, params
         end
       
       else
-        $sock.puts ":NickServ ! #{origin} :Invalid command. Use \002/msg #{@nick} help\002 for a command listing."
+        $sock.puts ":NickServ B #{origin} :Invalid command. Use \002/msg #{@nick} help\002 for a command listing."
       end
           
     end
