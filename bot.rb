@@ -3,7 +3,10 @@ module BitServ
     attr_accessor :nick, :ident, :host, :type
     
     def self.commands
-      @@commands ||= {}
+      @commands ||= {}
+    end
+    def self.handlers
+      @handlers ||= {}
     end
     
     def self.nick(nick=nil)
@@ -31,9 +34,16 @@ module BitServ
       end
     end
     
+    def self.on event, &blck
+      handlers[event.to_sym] = blck
+    end
     
     def initialize
       @nick = self.class.nick
+    end
+    
+    def emit event, args
+      handlers[event.to_sym].call args if handlers.has_key? event.to_sym
     end
     
     def run_command origin, params
@@ -45,14 +55,14 @@ module BitServ
         $sock.puts ":NickServ B #{origin} :****** \002#{@nick} Help\002 ******"
         $sock.puts ":NickServ B #{origin} :\002\002"
         $sock.puts ":NickServ B #{origin} :The following commands are available:"
-        @@commands.each_pair do |cmd, data|
+        self.class.commands.each_pair do |cmd, data|
           $sock.puts ":NickServ B #{origin} :\002#{cmd.ljust 16}\002#{data[:description]}"
         end
         $sock.puts ":NickServ B #{origin} :\002\002"
         $sock.puts ":NickServ B #{origin} :***** \002End of Help\002 *****"
         
-      elsif @@commands.has_key? command
-        data = @@commands[command]
+      elsif self.class.commands.has_key? command
+        data = self.class.commands[command]
         if data[:min_params] < params.size
           $sock.puts ":NickServ B #{origin} :Insufficient parameters for \002#{command}\002."
           $sock.puts ":NickServ B #{origin} :Syntax: #{command} <#{data[:params].join '> <'}>"
