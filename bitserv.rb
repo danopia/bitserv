@@ -1,7 +1,10 @@
-require 'socket'
+require 'yaml'
+config = YAML.load open('bitserv.yaml')
 
+require 'socket'
 sock = TCPSocket.new('localhost', 6667)
-sock.puts "PASS AAAAA"
+
+sock.puts "PASS #{config['uplink-password']}"
 sock.puts "PROTOCTL TOKEN NICKv2 VHP NICKIP UMODE2 SJOIN SJOIN2 SJ3 NOQUIT TKLEXT"
 sock.puts "SERVER services.danopia.net 1 :Atheme IRC Services"
 sock.puts ":services.danopia.net KILL NickServ :services.danopia.net (Attempt to use service nick)"
