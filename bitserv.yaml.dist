@@ -1,1 +1,10 @@
 uplink-password: PASSWORD HERE
+
+uplink-hostname: localhost
+uplink-port: 7776
+
+hostname: services.tld
+description: BitServ IRC Services
+
+# Use quotes!
+services-channel: "#services"

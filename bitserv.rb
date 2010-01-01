@@ -1,34 +1,35 @@
 require 'yaml'
+require 'socket'
+
 config = YAML.load open('bitserv.yaml')
 
-require 'socket'
-sock = TCPSocket.new('localhost', 6667)
+sock = TCPSocket.new(config['uplink-hostname'], config['uplink-port'].to_i)
 
 sock.puts "PASS #{config['uplink-password']}"
 sock.puts "PROTOCTL TOKEN NICKv2 VHP NICKIP UMODE2 SJOIN SJOIN2 SJ3 NOQUIT TKLEXT"
-sock.puts "SERVER services.danopia.net 1 :Atheme IRC Services"
-sock.puts ":services.danopia.net KILL NickServ :services.danopia.net (Attempt to use service nick)"
-sock.puts "NICK NickServ 1 1262302719 NickServ services.danopia.net services.danopia.net 0 +ioS * :Nickname Services"
-sock.puts ":services.danopia.net KILL BotServ :services.danopia.net (Attempt to use service nick)"
-sock.puts "NICK BotServ 1 1262302719 BotServ services.danopia.net services.danopia.net 0 +ioS * :Bot Services"
-sock.puts ":services.danopia.net KILL ChanServ :services.danopia.net (Attempt to use service nick)"
-sock.puts "NICK ChanServ 1 1262302719 ChanServ services.danopia.net services.danopia.net 0 +ioS * :Channel Services"
-sock.puts ":services.danopia.net KILL OperServ :services.danopia.net (Attempt to use service nick)"
-sock.puts "NICK OperServ 1 1262302719 OperServ services.danopia.net services.danopia.net 0 +ioS * :Operator Services"
-sock.puts ":services.danopia.net KILL Global :services.danopia.net (Attempt to use service nick)"
-sock.puts "NICK Global 1 1262302719 Global services.danopia.net services.danopia.net 0 +ioS * :Network Announcements"
-sock.puts ":services.danopia.net KILL MemoServ :services.danopia.net (Attempt to use service nick)"
-sock.puts "NICK MemoServ 1 1262302719 MemoServ services.danopia.net services.danopia.net 0 +ioS * :Memo Services"
-sock.puts "PING :services.danopia.net"
+sock.puts "SERVER #{config['hostname']} 1 :#{config['description']}"
+sock.puts ":#{config['hostname']} KILL NickServ :#{config['hostname']} (Attempt to use service nick)"
+sock.puts "NICK NickServ 1 1262302719 NickServ #{config['hostname']} #{config['hostname']} 0 +ioS * :Nickname Services"
+sock.puts ":#{config['hostname']} KILL BotServ :#{config['hostname']} (Attempt to use service nick)"
+sock.puts "NICK BotServ 1 1262302719 BotServ #{config['hostname']} #{config['hostname']} 0 +ioS * :Bot Services"
+sock.puts ":#{config['hostname']} KILL ChanServ :#{config['hostname']} (Attempt to use service nick)"
+sock.puts "NICK ChanServ 1 1262302719 ChanServ #{config['hostname']} #{config['hostname']} 0 +ioS * :Channel Services"
+sock.puts ":#{config['hostname']} KILL OperServ :#{config['hostname']} (Attempt to use service nick)"
+sock.puts "NICK OperServ 1 1262302719 OperServ #{config['hostname']} #{config['hostname']} 0 +ioS * :Operator Services"
+sock.puts ":#{config['hostname']} KILL Global :#{config['hostname']} (Attempt to use service nick)"
+sock.puts "NICK Global 1 1262302719 Global #{config['hostname']} #{config['hostname']} 0 +ioS * :Network Announcements"
+sock.puts ":#{config['hostname']} KILL MemoServ :#{config['hostname']} (Attempt to use service nick)"
+sock.puts "NICK MemoServ 1 1262302719 MemoServ #{config['hostname']} #{config['hostname']} 0 +ioS * :Memo Services"
+sock.puts "PING :#{config['hostname']}"
 
 sleep 0.5
-sock.puts ":services.danopia.net SJOIN 1261978832 #services + :@NickServ"
-sock.puts ":services.danopia.net SJOIN 1261978832 #services + :@BotServ"
-sock.puts ":services.danopia.net SJOIN 1261978832 #services + :@ChanServ"
-sock.puts ":services.danopia.net SJOIN 1261978832 #services + :@OperServ"
-sock.puts ":services.danopia.net SJOIN 1261978832 #services + :@Global"
-sock.puts ":services.danopia.net SJOIN 1261978832 #services + :@MemoServ"
-sock.puts ":services.danopia.net GLOBOPS :Finished synchronizing with network in 134 ms."
+sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@NickServ"
+sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@BotServ"
+sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@ChanServ"
+sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@OperServ"
+sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@Global"
+sock.puts ":#{config['hostname']} SJOIN 1261978832 #{config['services-channel']} + :@MemoServ"
+sock.puts ":#{config['hostname']} GLOBOPS :Finished synchronizing with network in -1 ms."
 
 while data = sock.gets
   parts = data.split ' :', 2
@@ -61,7 +62,7 @@ while data = sock.gets
     
     when '~' # timestamp, channel, list
       puts "Got user list for #{args[1]}: #{args[2]}"
-      sock.puts ":services.danopia.net SJOIN #{args[0]} #{args[1]} + :@ChanServ"
+      sock.puts ":#{config['hostname']} SJOIN #{args[0]} #{args[1]} + :@ChanServ"
     
     when ')' # channel, setter, when, topic
       puts "Topic for #{args[0]}: #{args.last}"
@@ -76,7 +77,7 @@ while data = sock.gets
     
     when '8'
       puts "Server pinged."
-      sock.puts ":services.danopia.net 9 services.danopia.net :#{args.last}"
+      sock.puts ":#{config['hostname']} 9 #{config['hostname']} :#{args.last}"
     
     when 'GLOBOPS'
       puts "Global op message: #{args.last}"
