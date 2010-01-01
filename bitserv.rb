@@ -89,5 +89,8 @@ while data = sock.gets
     when 'ERROR'
       puts "ERROR! #{args.first}"
       exit
+      
+    else
+      puts "Unknown packet: #{data}"
   end
 end
