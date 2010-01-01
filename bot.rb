@@ -14,7 +14,7 @@ module BitServ
       end
     end
     
-    def self.command name, description, *params=[], &blck
+    def self.command name, description, *params, &blck
       min_params = params.size
       min_params = params.shift if params.first.is_a? Fixnum
       
