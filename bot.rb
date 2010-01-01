@@ -63,7 +63,7 @@ module BitServ
         
       elsif self.class.commands.has_key? command
         data = self.class.commands[command]
-        if data[:min_params] < params.size
+        if data[:min_params] > params.size
           $sock.puts ":NickServ B #{origin} :Insufficient parameters for \002#{command}\002."
           $sock.puts ":NickServ B #{origin} :Syntax: #{command} <#{data[:params].join '> <'}>"
         else
