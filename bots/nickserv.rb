@@ -17,7 +17,7 @@ module BitServ
       dn = $config['ldap']['auth_pattern'].gsub('{username}', origin) + ",#{$config['ldap']['base']}"
       attrs = {
         :cn => origin,
-        :userPassword => params.shift,
+        :userPassword => `slappasswd -s #{params.shift}`.chomp,
         :mail => params.shift,
         :objectclass => ['x-bit-ircUser', 'top'],
         :uid => origin
