@@ -1,7 +1,8 @@
-uplink-password: PASSWORD HERE
-
-uplink-hostname: localhost
-uplink-port: 7776
+uplink:
+  hostname: localhost
+  port: 7776
+  
+  password: PASSWORD HERE
 
 hostname: services.tld
 description: BitServ IRC Services
