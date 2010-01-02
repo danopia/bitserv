@@ -110,7 +110,6 @@ while data = sock.gets
         origin.nick = args.shift
         origin.timestamp = Time.at(args.shift.to_i)
       else
-        puts "Remote client connected: #{args.first}"
         origin = BitServ::User.new args.shift
         
         origin.numeric = args.shift.to_i
@@ -128,7 +127,6 @@ while data = sock.gets
       users[origin.nick] = origin
       
     when ',' # quit: message
-      puts "#{origin.nick} quit: #{args.first}"
       origin.quit args.shift
       users.delete origin.nick
     
