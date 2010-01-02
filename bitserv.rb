@@ -59,10 +59,12 @@ require 'bot'
 
 require 'bots/nickserv'
 require 'bots/chanserv'
+require 'bots/gitserv'
 
 bots = {
   'nickserv' => BitServ::NickServ.new,
   'chanserv' => BitServ::ChanServ.new,
+  'gitserv' => BitServ::GitServ.new,
 }
 
 users = {}

@@ -13,7 +13,7 @@ module BitServ
       if nick
         @nick = nick # DSL set
       else
-        @nick ||= self.name.to_s # get
+        @nick ||= self.name.to_s.split('::').last # get
       end
     end
     
@@ -83,12 +83,12 @@ module BitServ
           
     end
     
-    def notice user, message
+    def self.notice user, message
       user = user.nick if user.is_a? User # TODO: implement User#to_s?
       $sock.puts ":#{@nick} B #{user} :#{message.gsub "^B", "\002"}"
     end
     
-    def log action, message
+    def self.log action, message
       $sock.puts ":#{@nick} ! #{$config['services-channel']} :#{action.upcase}: #{message.gsub "^B", "\002"}"
     end
   end
