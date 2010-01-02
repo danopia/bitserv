@@ -1,7 +1,7 @@
 module BitServ
   class NickServ < ServicesBot
     
-    command ['id', 'identify'], 'Identifies to services for a nickname.', 'password' do |origin, params|
+    command ['identify', 'id'], 'Identifies to services for a nickname.', 'password' do |origin, params|
       if LDAP.user_bind origin.nick, params.shift
         #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
         $sock.puts ":NickServ B #{origin.nick} :You are now identified for \002#{origin.nick}\002."

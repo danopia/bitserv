@@ -29,8 +29,14 @@ module BitServ
       }
       
       names = [names] if names.is_a? String
-      names.each do |name|
-        commands[name.upcase] = data
+      commands[names.first.upcase] = data
+      
+      if names.size > 1
+        data = data.clone
+        data[:alias_of] = names.shift.upcase
+        names.each do |name|
+          commands[name.upcase] = data
+        end
       end
     end
     
@@ -52,26 +58,27 @@ module BitServ
       command = params.shift.upcase
       
       if command == 'HELP'
-        $sock.puts ":#{@nick} B #{origin} :****** \002#{@nick} Help\002 ******"
-        $sock.puts ":#{@nick} B #{origin} :\002\002"
-        $sock.puts ":#{@nick} B #{origin} :The following commands are available:"
+        $sock.puts ":#{@nick} B #{origin.nick} :****** \002#{@nick} Help\002 ******"
+        $sock.puts ":#{@nick} B #{origin.nick} :\002\002"
+        $sock.puts ":#{@nick} B #{origin.nick} :The following commands are available:"
         self.class.commands.each_pair do |cmd, data|
-          $sock.puts ":#{@nick} B #{origin} :\002#{cmd.ljust 16}\002#{data[:description]}"
+          next if data.has_key? :alias_of
+          $sock.puts ":#{@nick} B #{origin.nick} :\002#{cmd.ljust 16}\002#{data[:description]}"
         end
-        $sock.puts ":#{@nick} B #{origin} :\002\002"
-        $sock.puts ":#{@nick} B #{origin} :***** \002End of Help\002 *****"
+        $sock.puts ":#{@nick} B #{origin.nick} :\002\002"
+        $sock.puts ":#{@nick} B #{origin.nick} :***** \002End of Help\002 *****"
         
       elsif self.class.commands.has_key? command
         data = self.class.commands[command]
         if data[:min_params] > params.size
-          $sock.puts ":#{@nick} B #{origin} :Insufficient parameters for \002#{command}\002."
-          $sock.puts ":#{@nick} B #{origin} :Syntax: #{command} <#{data[:params].join '> <'}>"
+          $sock.puts ":#{@nick} B #{origin.nick} :Insufficient parameters for \002#{command}\002."
+          $sock.puts ":#{@nick} B #{origin.nick} :Syntax: #{command} <#{data[:params].join '> <'}>"
         else
           data[:block].call origin, params
         end
       
       else
-        $sock.puts ":#{@nick} B #{origin} :Invalid command. Use \002/msg #{@nick} help\002 for a command listing."
+        $sock.puts ":#{@nick} B #{origin.nick} :Invalid command. Use \002/msg #{@nick} help\002 for a command listing."
       end
           
     end
