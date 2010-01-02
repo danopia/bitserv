@@ -4,7 +4,7 @@ require you to be logged in.
 
 Syntax: IDENTIFY <password>
 
-Below syntax is ^BNOT IMPLEMENTED^B
+Below syntax is ^BNOT IMPLEMENTED^B!
 You can also identify for another nick than you
 are currently using.
 

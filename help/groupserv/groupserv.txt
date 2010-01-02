@@ -1,0 +1,6 @@
+^BGroupServ^B is a bot that is special to our network. It allows
+users to register groups and add users to them, with the indirect
+benefit of having custom group vhosts. Groups may also get other
+benefits such as private sections in pastebins and wikis. Group
+channels use group memberships as access lists instead of lists
+of users and what they can do.
