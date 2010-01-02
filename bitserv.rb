@@ -29,15 +29,23 @@ module LDAP
   
   def self.bind node=nil, pass=nil
     ldap.auth "#{node},#{base}", pass
-    ldap.bind
   end
   
   def self.user_bind username, password
+    user_bind username, password
+    ldap.bind
+  end
+  def self.user_auth username, password
     bind Config['auth_pattern'].gsub('{username}', username), password
   end
   
+  # Don't need to bind; just increases operation time
   def self.master_bind
     bind Config['master_bind']['node'], Config['master_bind']['password']
+  end
+  
+  def self.success?
+    ldap.get_operation_result.code == 0
   end
 end
 
