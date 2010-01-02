@@ -45,7 +45,10 @@ end
 sock = TCPSocket.new(config['uplink']['hostname'], config['uplink']['port'].to_i)
 $sock = sock
 
+require 'user'
+require 'channel'
 require 'bot'
+
 require 'bots/nickserv'
 require 'bots/chanserv'
 
@@ -53,6 +56,8 @@ bots = {
   'nickserv' => BitServ::NickServ.new,
   'chanserv' => BitServ::ChanServ.new,
 }
+
+users = {}
 
 sock.puts "PASS #{config['uplink']['password']}"
 sock.puts "PROTOCTL TOKEN NICKv2 VHP NICKIP UMODE2 SJOIN SJOIN2 SJ3 NOQUIT TKLEXT"
@@ -99,8 +104,33 @@ while data = sock.gets
       puts "Server message to #{args[0]}: #{args[1]}"
     
     when '&' # nick, server numerc?, timestamp, ident, ip, server, servhops?, umode, cloak, base64, realname
-      puts "Remote client connected: #{args[0]}"
-      #sock.puts ":NickServ NOTICE #{args[0]} :Hey there."
+             # if origin: new nick, timestamp (where origin is old nick)
+      if origin
+        users.delete origin.nick
+        origin.nick = args.shift
+        origin.timestamp = Time.at(args.shift.to_i)
+      else
+        puts "Remote client connected: #{args.first}"
+        origin = BitServ::User.new args.shift
+        
+        origin.numeric = args.shift.to_i
+        origin.timestamp = Time.at(args.shift.to_i)
+        origin.ident = args.shift
+        origin.ip = args.shift
+        origin.server = args.shift
+        origin.hops = args.shift.to_i
+        origin.modes = args.shift
+        origin.cloak = args.shift
+        origin.base64 = args.shift
+        origin.realname = args.shift
+      end
+      
+      users[origin.nick] = origin
+      
+    when ',' # quit: message
+      puts "#{origin.nick} quit: #{args.first}"
+      origin.quit args.shift
+      users.delete origin.nick
     
     when '~' # timestamp, channel, list
       puts "Got user list for #{args[1]}: #{args[2]}"
