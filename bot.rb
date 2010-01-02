@@ -58,29 +58,34 @@ module BitServ
       command = params.shift.upcase
       
       if command == 'HELP'
-        $sock.puts ":#{@nick} B #{origin.nick} :****** \002#{@nick} Help\002 ******"
-        $sock.puts ":#{@nick} B #{origin.nick} :\002\002"
-        $sock.puts ":#{@nick} B #{origin.nick} :The following commands are available:"
+        notice origin, "****** ^B#{@nick} Help^B ******"
+        notice origin, "^B^B"
+        notice origin, "The following commands are available:"
         self.class.commands.each_pair do |cmd, data|
           next if data.has_key? :alias_of
-          $sock.puts ":#{@nick} B #{origin.nick} :\002#{cmd.ljust 16}\002#{data[:description]}"
+          notice origin, "^B#{cmd.ljust 16}^B #{data[:description]}"
         end
-        $sock.puts ":#{@nick} B #{origin.nick} :\002\002"
-        $sock.puts ":#{@nick} B #{origin.nick} :***** \002End of Help\002 *****"
+        notice origin, "^B^B"
+        notice origin, "***** ^BEnd of Help^B *****"
         
       elsif self.class.commands.has_key? command
         data = self.class.commands[command]
         if data[:min_params] > params.size
-          $sock.puts ":#{@nick} B #{origin.nick} :Insufficient parameters for \002#{command}\002."
-          $sock.puts ":#{@nick} B #{origin.nick} :Syntax: #{command} <#{data[:params].join '> <'}>"
+          notice origin, "Insufficient parameters for ^B#{command}^B."
+          notice origin, "Syntax: #{command} <#{data[:params].join '> <'}>"
         else
           data[:block].call origin, params
         end
       
       else
-        $sock.puts ":#{@nick} B #{origin.nick} :Invalid command. Use \002/msg #{@nick} help\002 for a command listing."
+        notice origin, "Invalid command. Use ^B/msg #{@nick} help^B for a command listing."
       end
           
+    end
+    
+    def notice user, message
+      user = user.nick if user.is_a? User # TODO: implement User#to_s?
+      $sock.puts ":#{@nick} B #{user} :#{message.gsub "^B", "\002"}"
     end
   end
 end
