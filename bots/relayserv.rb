@@ -33,21 +33,17 @@ module BitServ
       end
 
       @@bot.on :privmsg do
-        begin
-          next unless params[0] == '#illusion'
-          
-          $nicks ||= []
-          unless $nicks.include? sender.nick
-            $sock.puts ":services.danopia.net KILL #{sender.nick}[8b] :services.danopia.net (Attempt to use service nick)"
-            $sock.puts "& #{sender.nick}[8b] 1 #{Time.now.to_i} #{sender.nick}[8b] services.danopia.net services.danopia.net 0 +ioS * :Person from EighthBit"
-            $sock.puts ":services.danopia.net ~ #{Time.now.to_i} #bits :#{sender.nick}[8b]"
-            $nicks << sender.nick
-          end
-          
-          $sock.puts ":#{sender.nick}[8b] ! #bits :#{params[1]}"
-        rescue => ex
-          puts ex.class, ex.message, ex.backtrace
+        next unless params[0] == '#illusion'
+        
+        $nicks ||= []
+        unless $nicks.include? sender.nick
+          $sock.puts ":services.danopia.net KILL #{sender.nick}[8b] :services.danopia.net (Attempt to use service nick)"
+          $sock.puts "& #{sender.nick}[8b] 1 #{Time.now.to_i} #{sender.nick}[8b] services.danopia.net services.danopia.net 0 +ioS * :Person from EighthBit"
+          #$sock.puts ":services.danopia.net ~ #{Time.now.to_i} #bits :#{sender.nick}[8b]"
+          $nicks << sender.nick
         end
+        
+        $sock.puts ":#{sender.nick}[8b] ! #bits :#{params[1]}"
       end
 
       @@bot.on :ping do
