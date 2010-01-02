@@ -87,5 +87,9 @@ module BitServ
       user = user.nick if user.is_a? User # TODO: implement User#to_s?
       $sock.puts ":#{@nick} B #{user} :#{message.gsub "^B", "\002"}"
     end
+    
+    def log action, message
+      $sock.puts ":#{@nick} ! #{$config['services-channel']} :#{action.upcase}: #{message.gsub "^B", "\002"}"
+    end
   end
 end

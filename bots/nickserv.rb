@@ -27,7 +27,7 @@ module BitServ
       LDAP.master_bind
       LDAP.ldap.add :dn => dn, :attributes => attrs
       if LDAP.success?
-        $sock.puts ":OperServ ! #{$config['services-channel']} :REGISTER: \002#{origin.nick}\002 to \002#{attrs[:mail]}\002"
+        log 'register', "^B#{origin.nick}^B to ^B#{attrs[:mail]}^B"
         $sock.puts ":NickServ SVS2MODE #{origin.nick} +rd #{Time.now.to_i}"
         notice origin, "^B#{origin.nick}^B is now registered to ^B#{attrs[:mail]}^B, with the password ^B#{password}^B."
       else
@@ -47,7 +47,7 @@ module BitServ
       LDAP.ldap.delete :dn => dn
       
       if LDAP.success?
-        $sock.puts ":OperServ ! #{$config['services-channel']} :DROP: \002#{params[0]}\002 by \002#{origin}\002"
+        log 'drop', "^B#{params[0]}^B by ^B#{origin}^B"
         $sock.puts ":NickServ SVS2MODE #{origin.nick} -r+d 0"
         notice origin, "^B#{params[0]}^B has been dropped."
       else
