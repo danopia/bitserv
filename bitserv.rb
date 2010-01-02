@@ -60,12 +60,12 @@ sock.puts "SERVER #{me} 1 :#{config['description']}"
 
 bots.each_key do |bot|
   sock.puts ":#{me} KILL #{bot} :#{me} (Attempt to use service nick)"
-  sock.puts "NICK #{bot} 1 #{Time.now.to_i} #{bot} #{me} #{me} 0 +ioS * :Your standard #{bot}, minus any features"
+  sock.puts "& #{bot} 1 #{Time.now.to_i} #{bot} #{me} #{me} 0 +ioS * :Your standard #{bot}, minus any features"
 end
 
 stamps = {}
 
-sock.puts "PING :#{me}"
+sock.puts "8 :#{me}"
 
 joined_chan = false
 
@@ -78,6 +78,7 @@ while data = sock.gets
   
   origin = nil
   origin = args.shift[1..-1] if args.first[0,1] == ':'
+  origin = users[origin] if origin && users.has_key?(origin)
   
   command = args.shift
   case command
