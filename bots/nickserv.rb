@@ -28,7 +28,7 @@ module BitServ
       if LDAP.ldap.get_operation_result.code == 0
         $sock.puts ":OperServ ! #{$config['services-channel']} :REGISTER: \002#{origin}\002 to \002#{attrs[:mail]}\002"
         $sock.puts ":NickServ SVS2MODE #{origin} +rd #{Time.now.to_i}"
-        $sock.puts ":NickServ B #{origin} :\002#{origin}\002 is not registered to \002#{attrs[:mail]}\002, with the password \002#{attrs[:userPassword]}\002."
+        $sock.puts ":NickServ B #{origin} :\002#{origin}\002 is now registered to \002#{attrs[:mail]}\002, with the password \002#{attrs[:userPassword]}\002."
       else
         $sock.puts ":NickServ B #{origin} :An error occured while creating your account."
         puts "Result: #{LDAP.ldap.get_operation_result.code}"
