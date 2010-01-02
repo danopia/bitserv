@@ -60,11 +60,13 @@ require 'bot'
 require 'bots/nickserv'
 require 'bots/chanserv'
 require 'bots/gitserv'
+require 'bots/relayserv'
 
 bots = {
   'nickserv' => BitServ::NickServ.new,
   'chanserv' => BitServ::ChanServ.new,
   'gitserv' => BitServ::GitServ.new,
+  'relayserv' => BitServ::RelayServ.new,
 }
 
 users = {}
@@ -163,8 +165,13 @@ while data = sock.gets
     
     when '!' # channel, message
       puts "#{origin} said on #{args[0]}: #{args[1]}"
+      
       if args[1] =~ /^\001ACTION kicks ChanServ/
         sock.puts ":ChanServ ! #{args[0]} :ow"
+      end
+      
+      if args[0] == '#bits'
+        BitServ::RelayServ.bot[:eighthbit].send_cmd(:privmsg, '#illusion', "<#{BitServ::RelayServ.deping origin.nick}> #{args[1]}")
       end
       
       bots[args[0].downcase].run_command origin, args[1].split if bots.has_key? args[0].downcase

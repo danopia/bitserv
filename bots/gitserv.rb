@@ -7,7 +7,6 @@ end
 
 module BitServ
   class GitServ < ServicesBot
-    
     command ['issues'], 'Return the number of open/closed issues.', 'owner/project' do |origin, params|
       open = load_api('issues', 'list', params.first, 'open')['issues']
       closed = load_api('issues', 'list', params.first, 'closed')['issues']
