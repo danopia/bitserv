@@ -1,0 +1,17 @@
+Help for IDENTIFY:
+
+IDENTIFY identifies you with services so that you
+can perform general maintenance and commands that
+require you to be logged in.
+
+Syntax: IDENTIFY <password>
+
+Below syntax is ^BNOT IMPLEMENTED^B
+You can also identify for another nick than you
+are currently using.
+
+Syntax: IDENTIFY <nick> <password>
+
+Example:
+    /msg NickServ IDENTIFY foo
+    /msg NickServ IDENTIFY jilles foo

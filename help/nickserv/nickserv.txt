@@ -1,0 +1,4 @@
+^BNickServ^B allows users to ^B'register'^B a nickname, and stop
+others from using that nick. ^BNickServ^B allows the owner of a
+nickname to disconnect a user from the network that is using
+their nickname.

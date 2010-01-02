@@ -1,0 +1,3 @@
+^BOperServ^B provides essential network management services, such as
+routing manipulation and access restriction. Please do not abuse
+your access to ^BOperServ^B!

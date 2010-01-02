@@ -1,0 +1,13 @@
+This will register your current nickname with NickServ.
+This will allow you to assert some form of identity on
+the network and to be added to access lists. Furthermore,
+NickServ will warn users using your nick without
+identifying and allow you to kill ghosts.
+The password is a case-sensitive password that you make
+up. Please write down or memorize your password! You
+will need it later to change settings.
+
+Syntax: REGISTER <password> <email-address>
+
+Examples:
+    /msg NickServ REGISTER bar foo@bar.com
