@@ -3,11 +3,11 @@ require 'user'
 
 module BitServ
 class ServerLink < LineConnection
-  attr_accessor :users, :remote_server, :protocols, :me, :uplink, :config
+  attr_accessor :users, :remote_server, :protocols, :me, :uplink, :config, :bots
   
-  DEFAULT_PROTOCOLS = 'PROTOCTL TOKEN NICKv2 VHP NICKIP UMODE2 SJOIN SJOIN2 SJ3 NOQUIT TKLEXT'
+  DEFAULT_PROTOCOLS = 'TOKEN NICKv2 VHP NICKIP UMODE2 SJOIN SJOIN2 SJ3 NOQUIT TKLEXT'
 
-  def initialize config, uplink
+  def initialize config, uplink, bots=[]
     super()
     
     @users = {}
@@ -15,10 +15,11 @@ class ServerLink < LineConnection
     @me = config['hostname'] # TODO: Services instance
     @uplink = uplink
     @config = config
+    @bots = bots # TODO: Goes in @me
     
     send_welcome
-  #rescue => ex
-  #  puts ex.class, ex.message, ex.backtrace
+  rescue => ex
+    puts ex.class, ex.message, ex.backtrace
   end
   
   def send *args
@@ -34,13 +35,21 @@ class ServerLink < LineConnection
     send 'protoctl', @protocols
     send 'server', @me, 1, @config['description']
 
-    # TODO: Use the Services#bots array
-    #bots.each_key do |bot|
-    #  sock.puts ":#{me} KILL #{bot} :#{me} (Attempt to use service nick)"
-    #  sock.puts "& #{bot} 1 #{Time.now.to_i} #{bot} #{me} #{me} 0 +ioS * :Your standard #{bot}, minus any features"
-    #end
+    # TODO: Use the Services#bots array, when we have it
+    @bots.each do |bot|
+      send ":#{@me}", 'kill', bot.nick, "#{@me} (Attempt to use service nick)"
+      send '&', bot.nick, 1, Time.now.to_i, bot.nick, @me, @me, 0, '+ioS', '*', "Your friendly neighborhood #{bot.nick}"
+    end
 
-    send '8', @me # ping. TODO: put in a ping def?
+    send '8', @me # TODO: put in a ping def?
+  end
+  
+  def introduce_clone nick, ident, realname, umodes='ioS'
+    ident ||= nick
+    realname ||= "Your friendly neighborhood #{nick}"
+    
+    send ":#{@me}", 'kill', nick, "#{@me} (Attempt to use service nick)"
+    send '&', nick, 1, Time.now.to_i, ident, @me, @me, 0, "+#{umodes}", '*', realname
   end
   
   def receive_line line
@@ -52,7 +61,7 @@ class ServerLink < LineConnection
     
     origin = nil
     origin = args.shift[1..-1] if args.first[0,1] == ':'
-    origin = users[origin] if origin && users.has_key?(origin)
+    origin = @users[origin] if origin && @users.has_key?(origin)
     
     command = args.shift
     case command
@@ -67,6 +76,7 @@ class ServerLink < LineConnection
         puts "Received a link password"
       
       when 'SERVER' # server, numeric, description
+        @remote_server = args
         puts "Uplink server is #{args[0]}, numeric #{args[1]}: #{args[2]}"
       
       when 'SMO'
@@ -75,7 +85,7 @@ class ServerLink < LineConnection
       when '&' # nick, server numeric?, timestamp, ident, ip, server, servhops?, umode, cloak, base64, realname
                # if origin: new nick, timestamp (where origin is old nick)
         if origin
-          users.delete origin.nick
+          @users.delete origin.nick
           origin.nick = args.shift
           origin.timestamp = Time.at(args.shift.to_i)
         else
@@ -93,11 +103,11 @@ class ServerLink < LineConnection
           origin.realname = args.shift
         end
         
-        users[origin.nick] = origin
+        @users[origin.nick] = origin
         
       when ',' # quit: message
         origin.quit args.shift
-        users.delete origin.nick
+        @users.delete origin.nick
       
       when '~' # timestamp, channel, list TODO: parse into a Channel object
         puts "Got user list for #{args[1]}: #{args[2]}"

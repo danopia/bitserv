@@ -1,7 +1,5 @@
 module BitServ
   class ServicesBot
-    attr_accessor :nick, :ident, :host, :type
-    
     def self.commands
       @commands ||= {}
     end
@@ -44,15 +42,11 @@ module BitServ
       handlers[event.to_sym] = blck
     end
     
-    def initialize
-      @nick = self.class.nick.split('::').last
-    end
-    
-    def emit event, args
+    def self.emit event, args
       handlers[event.to_sym].call args if handlers.has_key? event.to_sym
     end
     
-    def run_command origin, params
+    def self.run_command origin, params
       return if params.empty?
       
       command = params.shift.upcase
@@ -86,9 +80,6 @@ module BitServ
     def self.notice user, message
       user = user.nick if user.is_a? User # TODO: implement User#to_s?
       $sock.puts ":#{@nick} B #{user} :#{message.gsub "^B", "\002"}"
-    end
-    def notice *args
-      self.class.notice *args
     end
     
     def self.log action, message
