@@ -24,7 +24,7 @@ module BitServ
         :uid => origin.nick
       }
       
-      LDAP.master_bind
+      LDAP.bot_bind self
       LDAP.ldap.add :dn => dn, :attributes => attrs
       if LDAP.success?
         log 'register', "^B#{origin.nick}^B to ^B#{attrs[:mail]}^B"
