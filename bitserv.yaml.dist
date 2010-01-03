@@ -16,19 +16,14 @@ ldap:
   hostname: ldap.eighthbit.net
   port: 389
   
-  # TODO: This is depreciated
-  master_bind:
-    node: uid=services,ou=irc
-    password: MASTER PASSWORD HERE
-  
   binds:
-  - bot: nickserv
+  - bot: NickServ
     password: NICKSERV PASS HERE
-  - bot: chanserv
+  - bot: ChanServ
     password: CHANSERV PASS HERE
-  - bot: groupserv
+  - bot: GroupServ
     password: GROUPSERV PASS HERE
   
   base: dc=eighthbit,dc=net
   auth_pattern: uid={username},ou=users
-  master_dn_format: uid={username},ou=services
+  master_dn_pattern: uid={username},ou=services
