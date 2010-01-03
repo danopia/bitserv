@@ -10,13 +10,25 @@ description: BitServ IRC Services
 # Use quotes!
 services-channel: "#services"
 
+# Note: This section isn't set up to be ready for EighthBit's LDAP. Many
+# example values are generalized. You have been warned.
 ldap:
   hostname: ldap.eighthbit.net
   port: 389
   
+  # TODO: This is depreciated
   master_bind:
     node: uid=services,ou=irc
     password: MASTER PASSWORD HERE
   
+  binds:
+  - bot: nickserv
+    password: NICKSERV PASS HERE
+  - bot: chanserv
+    password: CHANSERV PASS HERE
+  - bot: groupserv
+    password: GROUPSERV PASS HERE
+  
   base: dc=eighthbit,dc=net
   auth_pattern: uid={username},ou=users
+  master_dn_format: uid={username},ou=services
