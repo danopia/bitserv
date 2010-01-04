@@ -11,17 +11,20 @@ require 'user'
 require 'channel'
 require 'bot'
 
+require 'services'
 require 'server_link'
 
 require 'bots/nickserv'
 require 'bots/chanserv'
 require 'bots/gitserv'
-require 'bots/relayserv'
+#require 'bots/relayserv'
 
-bots = [BitServ::NickServ, BitServ::ChanServ, BitServ::GitServ]
+services = Services.new 'bitserv.yaml'
+# TODO: Use Services#load_bot
+services.bots = [BitServ::NickServ, BitServ::ChanServ, BitServ::GitServ]
 
 EventMachine.run do
-  uplink = config['uplink']
-  $uplink = EM.connect uplink['hostname'], uplink['port'].to_i, BitServ::ServerLink, config, config['uplink'], bots
-  # TODO: The uplink won't manage bots, the Services instance will
+  services.run! # TODO: Have two different calls, one that connects and
+  # one that starts EM and then connects. Possibly #connect to connect
+  # the uplinks and #run! to run EventMachine.
 end

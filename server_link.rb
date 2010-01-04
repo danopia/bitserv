@@ -3,23 +3,24 @@ require 'user'
 
 module BitServ
 class ServerLink < LineConnection
-  attr_accessor :users, :remote_server, :protocols, :me, :uplink, :config, :bots
+  attr_accessor :users, :remote_server, :protocols, :services, :config
   
   DEFAULT_PROTOCOLS = 'TOKEN NICKv2 VHP NICKIP UMODE2 SJOIN SJOIN2 SJ3 NOQUIT TKLEXT'
 
-  def initialize config, uplink, bots=[]
+  def initialize services, config
     super()
     
     @users = {}
     @protocols = (config['protocols'] || DEFAULT_PROTOCOLS).split ' '
-    @me = config['hostname'] # TODO: Services instance
-    @uplink = uplink
+    @services = services
+    @me = services.config['hostname']
     @config = config
-    @bots = bots # TODO: Goes in @me
     
     send_welcome
+    
   rescue => ex
     puts ex.class, ex.message, ex.backtrace
+    raise ex
   end
   
   def send *args
@@ -31,14 +32,12 @@ class ServerLink < LineConnection
   end
   
   def send_welcome
-    send 'pass', @uplink['password']
+    send 'pass', @config['password']
     send 'protoctl', @protocols
-    send 'server', @me, 1, @config['description']
+    send 'server', @me, 1, @services.config['description']
 
-    # TODO: Use the Services#bots array, when we have it
-    @bots.each do |bot|
-      send ":#{@me}", 'kill', bot.nick, "#{@me} (Attempt to use service nick)"
-      send '&', bot.nick, 1, Time.now.to_i, bot.nick, @me, @me, 0, '+ioS', '*', "Your friendly neighborhood #{bot.nick}"
+    @services.bots.each do |bot|
+      introduce_clone bot.nick
     end
 
     send '8', @me # TODO: put in a ping def?
@@ -50,6 +49,21 @@ class ServerLink < LineConnection
     
     send ":#{@me}", 'kill', nick, "#{@me} (Attempt to use service nick)"
     send '&', nick, 1, Time.now.to_i, ident, @me, @me, 0, "+#{umodes}", '*', realname
+  end
+    
+  def message origin, user, message
+    user = user.nick if user.is_a? User # TODO: implement User#to_s?
+    send ":#{origin}", '!', user, message
+  end
+  def notice origin, user, message
+    user = user.nick if user.is_a? User # TODO: implement User#to_s?
+    send ":#{origin}", 'B', user, message
+  end
+  
+  # Shifts +self+ onto the argument list and passes it to the associated
+  # Services instance.
+  def emit event, *args
+    @services.emit event, self, *args
   end
   
   def receive_line line
@@ -75,6 +89,7 @@ class ServerLink < LineConnection
       when 'PASS'
         puts "Received a link password"
       
+      # TODO: This will FAIL when there are multiple servers on the uplink network!
       when 'SERVER' # server, numeric, description
         @remote_server = args
         puts "Uplink server is #{args[0]}, numeric #{args[1]}: #{args[2]}"
@@ -86,8 +101,11 @@ class ServerLink < LineConnection
                # if origin: new nick, timestamp (where origin is old nick)
         if origin
           @users.delete origin.nick
+          old_nick = origin.nick
           origin.nick = args.shift
           origin.timestamp = Time.at(args.shift.to_i)
+          
+          emit :nick_change, old_nick, origin
         else
           origin = BitServ::User.new args.shift
           
@@ -101,15 +119,18 @@ class ServerLink < LineConnection
           origin.cloak = args.shift
           origin.base64 = args.shift
           origin.realname = args.shift
+          
+          emit :new_client, origin
         end
         
         @users[origin.nick] = origin
         
       when ',' # quit: message
-        origin.quit args.shift
+        emit :client_quit, origin, args.shift
         @users.delete origin.nick
       
       when '~' # timestamp, channel, list TODO: parse into a Channel object
+        # also TODO: Add an emit call once it's parsed
         puts "Got user list for #{args[1]}: #{args[2]}"
         
         # TODO: Use bot hooks instead of these hackity hacks
@@ -120,9 +141,12 @@ class ServerLink < LineConnection
         #    sock.puts ":#{me} SJOIN #{args[0]} #{args[1]} + :@#{bot}"
         #  end
         #end
+        
+        # TODO: Take care of those todos
       
       when 'H' # kick; channel, kickee, message
         puts "#{origin} kicked #{args[1]} from #{args[0]} (#{args[2]})"
+        emit :client_kicked, origin, *args
         
         # TODO: Make this a hook too.
         #if args[1] == 'ChanServ'
@@ -132,23 +156,37 @@ class ServerLink < LineConnection
       
       when ')' # channel, setter, when, topic
         puts "Topic for #{args[0]}: #{args.last}"
+        emit :got_topic, *args
       
       when '!' # channel, message
         puts "#{origin} said on #{args[0]}: #{args[1]}"
+        
+        if args[0][0,1] == '#'
+          emit :chan_message, origin, *args
+        else
+          emit :priv_message, origin, *args
+        end
         
         #if args[1] =~ /^\001ACTION kicks ChanServ/
         #  sock.puts ":ChanServ ! #{args[0]} :ow"
         #end
         
-        if args[0] == '#bits'
-          BitServ::RelayServ.bot[:eighthbit].send_cmd(:privmsg, '#illusion', "<#{BitServ::RelayServ.deping origin.nick}> #{args[1]}")
-        end
+        #if args[0] == '#bits'
+        #  BitServ::RelayServ.bot[:eighthbit].send_cmd(:privmsg, '#illusion', "<#{BitServ::RelayServ.deping origin.nick}> #{args[1]}")
+        #end
         
         # TODO: Do something about this.
-        bots[args[0].downcase].run_command origin, args[1].split if bots.has_key? args[0].downcase
+        #bots[args[0].downcase].run_command origin, args[1].split if bots.has_key? args[0].downcase
+        
+      when 'B' # notice: channel, message
+        if args[0][0,1] == '#'
+          emit :chan_notice, origin, *args
+        else
+          emit :priv_notice, origin, *args
+        end
       
       when 'AO' # 10 1262304315 2309 MD5:1f93b28198e5c6a138cf22cf14883316 0 0 0 :Danopia
-        # No idea, but it might be opering?
+        # TODO: Find out what this is. No idea, but it might be opering?
       
       when 'ES'
         #~ unless joined_chan
