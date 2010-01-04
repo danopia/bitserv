@@ -32,7 +32,7 @@ class ServerLink < LineConnection
   end
   
   def send_welcome
-    send 'pass', @config['password']
+    send 'pass', @config[:pass]
     send 'protoctl', @protocols
     send 'server', @me, 1, @services.config['description']
 
@@ -43,7 +43,7 @@ class ServerLink < LineConnection
     send '8', @me # TODO: put in a ping def?
   end
   
-  def introduce_clone nick, ident, realname, umodes='ioS'
+  def introduce_clone nick, ident=nil, realname=nil, umodes='ioS'
     ident ||= nick
     realname ||= "Your friendly neighborhood #{nick}"
     

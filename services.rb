@@ -48,6 +48,7 @@ module BitServ
         :host => uplink['hostname'],
         :port => uplink['port'].to_i,
         :type => type,
+        :pass => uplink['password'],
       }
       @uplinks << info
       connect_uplink info if running?
