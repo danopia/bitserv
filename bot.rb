@@ -2,6 +2,30 @@ module BitServ
   class ServicesBot
     attr_accessor :nick, :ident, :realname, :services
     
+    def self.command names, description, *params, &blck
+      @@commands ||= {}
+      
+      min_params = params.size
+      min_params = params.shift if params.first.is_a? Fixnum
+      
+      data = {
+        :description => description,
+        :params => params,
+        :min_params => min_params
+      }
+      
+      names = [names] if names.is_a? String
+      @@commands[names.first.upcase] = data
+      
+      if names.size > 1
+        data = data.clone
+        data[:alias_of] = names.shift.upcase
+        names.each do |name|
+          @@commands[name.upcase] = data
+        end
+      end
+    end
+    
     def initialize services
       @nick ||= self.class.to_s.split('::').last
       
@@ -12,8 +36,6 @@ module BitServ
       self.methods.each do |method|
         @services.on $1, self if method =~ /^on_(.+)$/
       end
-      
-      @@commands ||= {}
     end
     
     # TODO: Extremely broken/unusable
