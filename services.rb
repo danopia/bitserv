@@ -34,13 +34,13 @@ module BitServ
     
     def on event, bot, &blck
       @hooks[event.to_sym] ||= {}
-      @hooks[event.to_sym][bot.nick] = blck
+      @hooks[event.to_sym][bot] = blck
     end
     
     def emit event, *args
       return false unless @hooks.has_key? event.to_sym
-      @hooks[event.to_sym].each_value do |hook|
-        hook.call args
+      @hooks[event.to_sym].each_pair do |bot, hook|
+        hook.call bot, *args
       end
     end
     
