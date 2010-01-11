@@ -32,15 +32,15 @@ module BitServ
       @bots << type.new(self, *args)
     end
     
-    def on event, bot, &blck
-      @hooks[event.to_sym] ||= {}
-      @hooks[event.to_sym][bot] = blck
+    def add_handler event, bot, &blck
+      @hooks[event.to_sym] ||= []
+      @hooks[event.to_sym] |= [bot] # hmm...
     end
     
     def emit event, *args
       return false unless @hooks.has_key? event.to_sym
-      @hooks[event.to_sym].each_pair do |bot, hook|
-        hook.call bot, *args
+      @hooks[event.to_sym].each do |bot|
+        bot.send "on_#{event}", *args
       end
     end
     

@@ -34,7 +34,7 @@ module BitServ
       
       # Register hooks
       self.methods.each do |method|
-        @services.on $1, self if method =~ /^on_(.+)$/
+        @services.add_handler $1, self if method =~ /^on_(.+)$/
       end
     end
     

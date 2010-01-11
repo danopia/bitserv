@@ -31,6 +31,7 @@ class ServerLink < LineConnection
     args.unshift ":#{args.shift.nick}" if args.first.is_a? User
     args[(args.first[0,1] == ':') ? 1 : 0].upcase!
     args.push ":#{args.pop}" if args.last.include? ' '
+    puts "Sent #{args.join ' '}"
     send_line args.join ' '
   end
   
@@ -45,7 +46,7 @@ class ServerLink < LineConnection
   end
   
   def force_join channel, bot
-    send ":#{@me}", '~', channel.name, channel.timestamp.to_i, '+', ":@#{bot.nick}"
+    send ":#{@me}", '~', channel.timestamp.to_i, channel.name, '+', ":@#{bot.nick}"
     puts "hi"
   end
   
