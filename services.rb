@@ -44,6 +44,10 @@ module BitServ
       end
     end
     
+    def is_services_channel? channel
+      channel.name.downcase == @config['services-channel'].downcase
+    end
+    
     def add_uplink type, name=nil
       uplink = config['uplink']
       uplink ||= config['uplinks'].find {|block| block['name'] == name}

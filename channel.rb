@@ -7,6 +7,5 @@ module BitServ
       @name = name
       @users = []
     end
-    
   end
 end

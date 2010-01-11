@@ -50,7 +50,7 @@ module BitServ
     end
     
     def on_new_channel link, channel
-      link.force_join channel, self if channel.name.downcase == @services.config['services-channel'].downcase
+      link.force_join channel, self if @services.is_services_channel? channel
     end
     
     # TODO: Extremely broken/unusable
