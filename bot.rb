@@ -43,8 +43,12 @@ module BitServ
       @link = link
       
       params = message.split
-      command = params.shift
-      if respond_to?("cmd_#{command}") && @@commands.has_key?(command.upcase)
+      command = params.shift.downcase
+      
+      if command == 'help'
+        cmd_help from, params # exception here because of the unlimited args
+        
+      elsif respond_to?("cmd_#{command}") && @@commands.has_key?(command.upcase)
         info = @@commands[command.upcase]
         if params.size < info[:min_params]
           notice from, "Insufficient parameters for ^B#{command}^B."
@@ -62,40 +66,50 @@ module BitServ
       @link = nil
     end
     
-    def on_new_channel link, channel
-      link.force_join channel, self if @services.is_services_channel? channel
-    end
-    
-    # TODO: Extremely broken/unusable
-    def self.run_command origin, params
-      return if params.empty?
-      
-      command = params.shift.upcase
-      
-      if command == 'HELP'
+    def cmd_help origin, args
+      if args.size == 0
         notice origin, "****** ^B#{@nick} Help^B ******"
+        
+        file = File.join(File.dirname(__FILE__), 'help', @nick.downcase, 'synopsis') + '.txt'
+        File.read(file).chomp.each_line do |line|
+          notice origin, (line == '' ? '^B^B' : line)
+        end
+        
         notice origin, "^B^B"
         notice origin, "The following commands are available:"
-        self.class.commands.each_pair do |cmd, data|
+        @@commands.each_pair do |cmd, data|
           next if data.has_key? :alias_of
           notice origin, "^B#{cmd.ljust 16}^B #{data[:description]}"
         end
         notice origin, "^B^B"
+        
         notice origin, "***** ^BEnd of Help^B *****"
         
-      elsif self.class.commands.has_key? command
-        data = self.class.commands[command]
-        if data[:min_params] > params.size
-          notice origin, "Insufficient parameters for ^B#{command}^B."
-          notice origin, "Syntax: #{command} <#{data[:params].join '> <'}>"
-        else
-          data[:block].call origin, params
-        end
-      
+      elsif args.include? '..'
+        notice origin, "You can stop hacking now."
+        #notice origin, "No help available for ^B#{args.join ' '}^B."
+        
       else
-        notice origin, "Invalid command. Use ^B/msg #{@nick} help^B for a command listing."
-      end
+        file = File.join(File.dirname(__FILE__), 'help', @nick.downcase, *args) + '.txt'
+        if File.exists? file
+        
+          notice origin, "****** ^B#{@nick} Help^B ******"
+          notice origin, "Help for ^B#{args.join(' ').upcase}^B:"
+          notice origin, "^B^B"
           
+          File.read(file).chomp.each_line do |line|
+            notice origin, (line == "\n" ? '^B^B' : line)
+          end
+          notice origin, "***** ^BEnd of Help^B *****"
+          
+        else
+          notice origin, "No help available for ^B#{args.join ' '}^B."
+        end
+      end
+    end
+    
+    def on_new_channel link, channel
+      link.force_join channel, self if @services.is_services_channel? channel
     end
     
     def notice user, message
