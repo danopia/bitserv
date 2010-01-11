@@ -20,8 +20,10 @@ require 'bots/gitserv'
 #require 'bots/relayserv'
 
 services = BitServ::Services.new 'bitserv.yaml'
-# TODO: Use Services#load_bot
-services.bots = [BitServ::NickServ, BitServ::ChanServ, BitServ::GitServ]
+
+services.load_bot BitServ::NickServ
+services.load_bot BitServ::ChanServ
+services.load_bot BitServ::GitServ
 
 services.add_uplink BitServ::ServerLink
 

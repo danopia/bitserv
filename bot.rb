@@ -1,18 +1,19 @@
 module BitServ
   class ServicesBot
+    attr_accessor :nick, :ident, :realname, :services
+    
     def self.commands
-      @commands ||= {}
+      @@commands ||= {}
     end
     def self.handlers
-      @handlers ||= {}
+      @@handlers ||= {}
     end
     
-    def self.nick(nick=nil)
-      if nick
-        @nick = nick # DSL set
-      else
-        @nick ||= self.name.to_s.split('::').last # get
-      end
+    def initialize services
+      @services = services
+      
+      @@commands ||= {}
+      @@handlers ||= {}
     end
     
     def self.command names, description, *params, &blck
@@ -42,8 +43,8 @@ module BitServ
       handlers[event.to_sym] = blck
     end
     
-    def self.emit event, args
-      handlers[event.to_sym].call args if handlers.has_key? event.to_sym
+    def emit event, args
+      @@handlers[event.to_sym].call args if handlers.has_key? event.to_sym
     end
     
     def self.run_command origin, params

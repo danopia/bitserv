@@ -28,6 +28,10 @@ module BitServ
       @running = false
     end
     
+    def load_bot type, *args
+      @bots << type.new(self, *args)
+    end
+    
     def on event, bot, &blck
       @hooks[event.to_sym] ||= {}
       @hooks[event.to_sym][bot.name] = blck
