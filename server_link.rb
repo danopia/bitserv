@@ -147,7 +147,7 @@ class ServerLink < LineConnection
           emit :channel_join, channel, args[2].split(' ')
         else
           channel = Channel.new args[1]
-          channel.users = args[2].split(' ')
+          channel.users += args[2].split(' ')
           channel.timestamp = Time.at args[0].to_i
           
           @channels[args[1].downcase] = channel

@@ -1,11 +1,11 @@
 module BitServ
   class Channel
-    attr_reader :name, :users
-    attr_accessor :topic, :timestamp, :modes
+    attr_reader :name
+    attr_accessor :topic, :timestamp, :modes, :users
     
     def initialize(name)
       @name = name
-      @users = {}
+      @users = []
     end
     
   end
