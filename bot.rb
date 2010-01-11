@@ -16,8 +16,12 @@ module BitServ
       
       @services.introduce_clone self.nick
       
+      # Register hooks
+      self.class.handlers.each_pair do |event, handler|
+        @services.on event, self, &handler
+      end
+      
       @@commands ||= {}
-      @@handlers ||= {}
     end
     
     def self.command names, description, *params, &blck
@@ -45,10 +49,6 @@ module BitServ
     
     def self.on event, &blck
       handlers[event.to_sym] = blck
-    end
-    
-    def emit event, args
-      @@handlers[event.to_sym].call args if handlers.has_key? event.to_sym
     end
     
     def self.run_command origin, params

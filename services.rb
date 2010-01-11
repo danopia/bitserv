@@ -34,7 +34,7 @@ module BitServ
     
     def on event, bot, &blck
       @hooks[event.to_sym] ||= {}
-      @hooks[event.to_sym][bot.name] = blck
+      @hooks[event.to_sym][bot.nick] = blck
     end
     
     def emit event, *args
