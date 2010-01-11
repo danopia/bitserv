@@ -5,6 +5,10 @@ module BitServ
     command 'register', 'Registers a nickname.', 'password', 'email'
     command 'drop', 'Drops an account registration.', 'nickname', 'password'
     
+    def cmd_identify origin, password
+      puts password
+    end
+    
     #~ command ['identify', 'id'], 'Identifies to services for a nickname.', 'password' do |origin, params|
       #~ if LDAP.user_bind origin.nick, params.shift
         #~ #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"

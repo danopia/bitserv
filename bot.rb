@@ -38,6 +38,17 @@ module BitServ
       end
     end
     
+    def on_priv_message link, from, to, message
+      return unless to.downcase == self.nick.downcase
+      
+      params = message.split
+      if respond_to? "cmd_#{params.first}"
+        puts method("cmd_#{params.first}").arity
+        puts params.size
+        send "cmd_#{params.shift}", from, params if method("cmd_#{params.first}").arity == params.size
+      end
+    end
+    
     # TODO: Extremely broken/unusable
     def self.run_command origin, params
       return if params.empty?
