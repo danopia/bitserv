@@ -1,5 +1,23 @@
 module BitServ
   class NickServ < ServicesBot
+  
+    def on_new_client link, client
+      check_nick_reg link, client
+    end
+    
+    def on_nick_change link, old_nick, client
+      check_nick_reg link, client
+    end
+    
+    def check_nick_reg link, client
+      client.dn = $config['ldap']['auth_pattern'].gsub('{username}', client.nick) + ",#{$config['ldap']['base']}"
+      
+      client.entry = LDAP.ldap.search :base => client.dn
+      if client.entry
+        client.entry = client.entry.first
+        notice client, "This nickname is registered. Please choose a different nickname, or identify via ^B/msg #{@nick} identify <password>^B.", link
+      end
+    end
     
     command ['identify', 'id'], 'Identifies to services for a nickname.', 'password'
     command 'register', 'Registers a nickname.', 'password', 'email'

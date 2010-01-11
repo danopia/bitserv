@@ -112,8 +112,8 @@ module BitServ
       link.force_join channel, self if @services.is_services_channel? channel
     end
     
-    def notice user, message
-      @link.notice @nick, user, message.gsub("^B", "\002")
+    def notice user, message, link=nil
+      (link || @link).notice @nick, user, message.gsub("^B", "\002")
     end
     
     def log action, message
