@@ -2,55 +2,21 @@ module BitServ
   class ServicesBot
     attr_accessor :nick, :ident, :realname, :services
     
-    def self.commands
-      @@commands ||= {}
-    end
-    def self.handlers
-      @@handlers ||= {}
-    end
-    
     def initialize services
-      @services = services
-      
       @nick ||= self.class.to_s.split('::').last
       
+      @services = services
       @services.introduce_clone self.nick
       
       # Register hooks
-      self.class.handlers.each_pair do |event, handler|
-        @services.on event, self, &handler
+      self.methods.each do |method|
+        @services.on $1, self if method =~ /^on_(.+)$/
       end
       
       @@commands ||= {}
     end
     
-    def self.command names, description, *params, &blck
-      min_params = params.size
-      min_params = params.shift if params.first.is_a? Fixnum
-      
-      data = {
-        :description => description,
-        :params => params,
-        :min_params => min_params,
-        :block => blck
-      }
-      
-      names = [names] if names.is_a? String
-      commands[names.first.upcase] = data
-      
-      if names.size > 1
-        data = data.clone
-        data[:alias_of] = names.shift.upcase
-        names.each do |name|
-          commands[name.upcase] = data
-        end
-      end
-    end
-    
-    def self.on event, &blck
-      handlers[event.to_sym] = blck
-    end
-    
+    # TODO: Extremely broken/unusable
     def self.run_command origin, params
       return if params.empty?
       
@@ -82,13 +48,13 @@ module BitServ
           
     end
     
-    def self.notice user, message
-      user = user.nick if user.is_a? User # TODO: implement User#to_s?
-      $sock.puts ":#{@nick} B #{user} :#{message.gsub "^B", "\002"}"
-    end
+    #def self.notice user, message
+      #user = user.nick if user.is_a? User # TODO: implement User#to_s?
+      #$sock.puts ":#{@nick} B #{user} :#{message.gsub "^B", "\002"}"
+    #end
     
-    def self.log action, message
-      $sock.puts ":#{@nick} ! #{$config['services-channel']} :#{action.upcase}: #{message.gsub "^B", "\002"}"
-    end
+    #def self.log action, message
+      #$sock.puts ":#{@nick} ! #{$config['services-channel']} :#{action.upcase}: #{message.gsub "^B", "\002"}"
+    #end
   end
 end

@@ -16,14 +16,15 @@ require 'server_link'
 
 require 'bots/nickserv'
 require 'bots/chanserv'
-require 'bots/gitserv'
+#require 'bots/gitserv'
 #require 'bots/relayserv'
 
 services = BitServ::Services.new 'bitserv.yaml'
 
 services.load_bot BitServ::NickServ
 services.load_bot BitServ::ChanServ
-services.load_bot BitServ::GitServ
+#services.load_bot BitServ::GitServ
+#services.load_bot BitServ::RelayServ
 
 services.add_uplink BitServ::ServerLink
 
