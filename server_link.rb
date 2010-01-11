@@ -35,6 +35,12 @@ class ServerLink < LineConnection
     send_line args.join ' '
   end
   
+  def send_from origin, *args
+    origin = origin.nick if origin.is_a? User
+    args.unshift ":#{origin}"
+    send_line args
+  end
+  
   def send_handshake
     send 'pass', @config[:pass]
     send 'protoctl', @protocols
@@ -46,11 +52,11 @@ class ServerLink < LineConnection
   end
   
   def oper_msg message
-    send ":#{@me}", 'GLOBOPS', message
+    send_from @me, 'GLOBOPS', message
   end
   
   def force_join channel, bot
-    send ":#{@me}", '~', channel.timestamp.to_i, channel.name, '+', ":@#{bot.nick}"
+    send_from @me, '~', channel.timestamp.to_i, channel.name, '+', ":@#{bot.nick}"
     puts "hi"
   end
   
@@ -58,7 +64,7 @@ class ServerLink < LineConnection
     ident ||= nick
     realname ||= "Your friendly neighborhood #{nick}"
     
-    send ":#{@me}", 'kill', nick, "#{@me} (Attempt to use service nick)"
+    send_from @me, 'kill', nick, "#{@me} (Attempt to use service nick)"
     send '&', nick, 1, Time.now.to_i, ident, @me, @me, 0, "+#{umodes}", '*', realname
   end
   
@@ -69,16 +75,16 @@ class ServerLink < LineConnection
   end
   
   def quit_clone nick, message='Leaving'
-    send ":#{nick}", 'QUIT', message
+    send_from nick, 'QUIT', message
   end
     
   def message origin, user, message
     user = user.nick if user.is_a? User # TODO: implement User#to_s?
-    send ":#{origin}", '!', user, message
+    send_from origin, '!', user, message
   end
   def notice origin, user, message
     user = user.nick if user.is_a? User # TODO: implement User#to_s?
-    send ":#{origin}", 'B', user, message
+    send_from origin, 'B', user, message
   end
   
   # Shifts +self+ onto the argument list and passes it to the associated
@@ -219,7 +225,7 @@ class ServerLink < LineConnection
           #~ joined_chan = true
         #~ end
         
-        send ":#{@me}", 'globops', 'Finished synchronizing with network in -0.01 ms.'
+        send_from @me, 'globops', 'Finished synchronizing with network in -0.01 ms.' # TODO: Use a method (it exists)
         puts "Done syncing."
       
       when '9'
@@ -227,7 +233,7 @@ class ServerLink < LineConnection
       
       when '8'
         puts "Server pinged."
-        send ":#{@me}", '9', @me, args
+        send_from @me, '9', @me, args
       
       when 'GLOBOPS'
         puts "Global op message: #{args.last}"
