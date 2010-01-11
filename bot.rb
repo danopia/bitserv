@@ -40,6 +40,7 @@ module BitServ
     
     def on_priv_message link, from, to, message
       return unless to.downcase == self.nick.downcase
+      @link = link
       
       params = message.split
       command = params.shift
@@ -57,6 +58,8 @@ module BitServ
         p @@commands.has_key?(command.upcase)
         notice from, "Invalid command. Use ^B/msg #{@nick} help^B for a command listing."
       end
+      
+      @link = nil
     end
     
     def on_new_channel link, channel
