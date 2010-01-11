@@ -3,7 +3,7 @@ require 'user'
 
 module BitServ
 class ServerLink < LineConnection
-  attr_accessor :users, :remote_server, :protocols, :services, :config
+  attr_accessor :users, :channels, :remote_server, :protocols, :services, :config
   
   DEFAULT_PROTOCOLS = 'TOKEN NICKv2 VHP NICKIP UMODE2 SJOIN SJOIN2 SJ3 NOQUIT TKLEXT'
 
@@ -11,6 +11,7 @@ class ServerLink < LineConnection
     super()
     
     @users = {}
+    @channels = {}
     @protocols = (config['protocols'] || DEFAULT_PROTOCOLS).split ' '
     @services = services
     @me = services.config['hostname']
@@ -135,20 +136,24 @@ class ServerLink < LineConnection
         emit :client_quit, origin, args.shift
         @users.delete origin.nick
       
-      when '~' # timestamp, channel, list TODO: parse into a Channel object
-        # also TODO: Add an emit call once it's parsed
+      when '~' # timestamp, channel, list
         puts "Got user list for #{args[1]}: #{args[2]}"
         
-        # TODO: Use bot hooks instead of these hackity hacks
-        #sock.puts ":#{me} SJOIN #{args[0]} #{args[1]} + :@ChanServ" unless stamps[args[1]]
-        #stamps[args[1]] = args[0]
-        #if args[1] == config['services-channel']
-        #  (bots.keys - ['ChanServ']).each do |bot|
-        #    sock.puts ":#{me} SJOIN #{args[0]} #{args[1]} + :@#{bot}"
-        #  end
-        #end
-        
-        # TODO: Take care of those todos
+        channel = @channels[args[1].downcase]
+        if channel
+          channel.users += args[2].split(' ')
+          channel.timestamp = Time.at args[0].to_i
+          
+          emit :channel_join, channel, args[2].split(' ')
+        else
+          channel = Channel.new args[1]
+          channel.users = args[2].split(' ')
+          channel.timestamp = Time.at args[0].to_i
+          
+          @channels[args[1].downcase] = channel
+          
+          emit :new_channel, channel
+        end
       
       when 'H' # kick; channel, kickee, message
         puts "#{origin} kicked #{args[1]} from #{args[0]} (#{args[2]})"
