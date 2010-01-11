@@ -46,8 +46,8 @@ module BitServ
       if respond_to?("cmd_#{command}") && @@commands.has_key?(command.upcase)
         info = @@commands[command.upcase]
         if params.size < info[:min_params]
-          link.notice @nick, from, "Insufficient parameters for ^B#{command}^B."
-          link.notice @nick, from, "Syntax: #{command} <#{info[:params].join '> <'}>"
+          notice from, "Insufficient parameters for ^B#{command}^B."
+          notice from, "Syntax: #{command} <#{info[:params].join '> <'}>"
         else
           params.pop until params.size <= info[:params].size
           send "cmd_#{command}", from, *params
@@ -55,7 +55,7 @@ module BitServ
       else
         p respond_to?("cmd_#{command}")
         p @@commands.has_key?(command.upcase)
-        link.notice @nick, from, "Invalid command. Use ^B/msg #{@nick} help^B for a command listing."
+        notice from, "Invalid command. Use ^B/msg #{@nick} help^B for a command listing."
       end
     end
     
@@ -95,13 +95,12 @@ module BitServ
           
     end
     
-    #def self.notice user, message
-      #user = user.nick if user.is_a? User # TODO: implement User#to_s?
-      #$sock.puts ":#{@nick} B #{user} :#{message.gsub "^B", "\002"}"
-    #end
+    def notice user, message
+      link.notice @nick, user, message.gsub("^B", "\002")
+    end
     
-    #def self.log action, message
-      #$sock.puts ":#{@nick} ! #{$config['services-channel']} :#{action.upcase}: #{message.gsub "^B", "\002"}"
-    #end
+    def log action, message
+      link.message @nick, @services.config['services-channel'], "#{action.upcase}: #{message.gsub "^B", "\002"}"
+    end
   end
 end
