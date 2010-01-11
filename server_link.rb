@@ -38,7 +38,7 @@ class ServerLink < LineConnection
   def send_from origin, *args
     origin = origin.nick if origin.is_a? User
     args.unshift ":#{origin}"
-    send_line args
+    send *args
   end
   
   def send_handshake
