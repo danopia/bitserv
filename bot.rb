@@ -49,6 +49,10 @@ module BitServ
       end
     end
     
+    def on_new_channel link, channel
+      link.force_join channel, self if channel.name.downcase == @services.config['services-channel'].downcase
+    end
+    
     # TODO: Extremely broken/unusable
     def self.run_command origin, params
       return if params.empty?
