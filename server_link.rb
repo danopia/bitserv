@@ -44,6 +44,10 @@ class ServerLink < LineConnection
     send '8', @me
   end
   
+  def force_join channel, bot
+    send ":#{@me}", '~', channel.name, channel.timestamp.to_i, '+', ":@#{bot.nick}"
+  end
+  
   def introduce_clone nick, ident=nil, realname=nil, umodes='ioS'
     ident ||= nick
     realname ||= "Your friendly neighborhood #{nick}"
