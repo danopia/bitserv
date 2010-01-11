@@ -42,10 +42,20 @@ module BitServ
       return unless to.downcase == self.nick.downcase
       
       params = message.split
-      if respond_to? "cmd_#{params.first}"
-        puts method("cmd_#{params.first}").arity
-        puts params.size
-        send "cmd_#{params.shift}", from, params if method("cmd_#{params.first}").arity == params.size
+      command = params.shift
+      if respond_to?("cmd_#{command}") && @@commands.has_key?(command.upcase)
+        info = @@commands[command.upcase]
+        if params.size < info[:min_params]
+          link.notice @nick, from, "Insufficient parameters for ^B#{command}^B."
+          link.notice @nick, from, "Syntax: #{command} <#{info[:params].join '> <'}>"
+        else
+          params.pop until params.size <= info[:params].size
+          send "cmd_#{command}", from, *params
+        end
+      else
+        p respond_to?("cmd_#{command}")
+        p @@commands.has_key?(command.upcase)
+        link.notice @nick, from, "Invalid command. Use ^B/msg #{@nick} help^B for a command listing."
       end
     end
     
