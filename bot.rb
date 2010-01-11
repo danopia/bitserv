@@ -12,6 +12,10 @@ module BitServ
     def initialize services
       @services = services
       
+      @nick ||= self.class.to_s.split('::').last
+      
+      @services.introduce_clone self.nick
+      
       @@commands ||= {}
       @@handlers ||= {}
     end

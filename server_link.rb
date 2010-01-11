@@ -16,7 +16,9 @@ class ServerLink < LineConnection
     @me = services.config['hostname']
     @config = config
     
-    send_welcome
+    send_handshake
+    introduce_bots
+    ping
     
   rescue => ex
     puts ex.class, ex.message, ex.backtrace
@@ -31,16 +33,14 @@ class ServerLink < LineConnection
     send_line args.join ' '
   end
   
-  def send_welcome
+  def send_handshake
     send 'pass', @config[:pass]
     send 'protoctl', @protocols
     send 'server', @me, 1, @services.config['description']
-
-    @services.bots.each do |bot|
-      introduce_clone bot.nick
-    end
-
-    send '8', @me # TODO: put in a ping def?
+  end
+  
+  def ping
+    send '8', @me
   end
   
   def introduce_clone nick, ident=nil, realname=nil, umodes='ioS'
@@ -49,6 +49,12 @@ class ServerLink < LineConnection
     
     send ":#{@me}", 'kill', nick, "#{@me} (Attempt to use service nick)"
     send '&', nick, 1, Time.now.to_i, ident, @me, @me, 0, "+#{umodes}", '*', realname
+  end
+  
+  def introduce_bots
+    @services.bots.each do |bot|
+      introduce_clone bot.nick
+    end
   end
     
   def message origin, user, message

@@ -74,7 +74,7 @@ module BitServ
       end
     end
   
-    def introduce_clone nick, ident, realname, umodes='ioS'
+    def introduce_clone nick, ident=nil, realname=nil, umodes='ioS'
       ident ||= nick
       realname ||= "Your friendly neighborhood #{nick}"
       call_uplinks :introduce_clone, nick, ident, realname, umodes
