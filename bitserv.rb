@@ -28,6 +28,11 @@ services.load_bot BitServ::ChanServ
 
 services.add_uplink BitServ::ServerLink
 
+trap "INT" do
+  services.shutdown "Caught interupt"
+  exit
+end
+
 EventMachine.run do
   services.run! # TODO: Have two different calls, one that connects and
   # one that starts EM and then connects. Possibly #connect to connect

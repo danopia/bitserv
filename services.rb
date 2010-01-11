@@ -28,6 +28,11 @@ module BitServ
       @running = false
     end
     
+    def shutdown message='Shutting down'
+      emit :on_shutdown, message
+      call_uplinks :oper_msg, message
+    end
+    
     def load_bot type, *args
       @bots << type.new(self, *args)
     end
@@ -74,7 +79,7 @@ module BitServ
     
     def call_uplinks method, *args
       @uplinks.each do |uplink|
-        uplink.call method, *args
+        uplink[:instance].__send__ method, *args # don't collide with send-to-server
       end
     end
   

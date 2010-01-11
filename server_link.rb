@@ -45,6 +45,10 @@ class ServerLink < LineConnection
     send '8', @me
   end
   
+  def oper_msg message
+    send ":#{@me}", 'GLOBOPS', message
+  end
+  
   def force_join channel, bot
     send ":#{@me}", '~', channel.timestamp.to_i, channel.name, '+', ":@#{bot.nick}"
     puts "hi"
@@ -62,6 +66,10 @@ class ServerLink < LineConnection
     @services.bots.each do |bot|
       introduce_clone bot.nick
     end
+  end
+  
+  def quit_clone nick, message='Leaving'
+    send ":#{nick}", 'QUIT', message
   end
     
   def message origin, user, message

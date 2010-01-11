@@ -9,5 +9,9 @@ module BitServ
       #  end
       #end
     end
+    
+    def on_shutdown message
+      @services.call_uplinks :quit_clone, self.nick, 'Shutting down'
+    end
   end
 end
