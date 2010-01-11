@@ -17,49 +17,48 @@ module BitServ
       end
     end
     
-    #~ command 'register', 'Registers a nickname.', 'password', 'email' do |origin, params|
-      #~ dn = $config['ldap']['auth_pattern'].gsub('{username}', origin.nick) + ",#{$config['ldap']['base']}"
-      #~ password = params.shift
-      #~ attrs = {
-        #~ :cn => origin.nick,
-        #~ :userPassword => `slappasswd -s #{password}`.chomp,
-        #~ :mail => params.shift,
-        #~ :objectclass => ['x-bit-ircUser', 'top'],
-        #~ :uid => origin.nick
-      #~ }
-      #~ 
-      #~ LDAP.bot_bind self
-      #~ LDAP.ldap.add :dn => dn, :attributes => attrs
-      #~ if LDAP.success?
-        #~ log 'register', "^B#{origin.nick}^B to ^B#{attrs[:mail]}^B"
-        #~ $sock.puts ":NickServ SVS2MODE #{origin.nick} +rd #{Time.now.to_i}"
-        #~ notice origin, "^B#{origin.nick}^B is now registered to ^B#{attrs[:mail]}^B, with the password ^B#{password}^B."
-      #~ else
-        #~ notice origin, "An error occurred while creating your account."
-        #~ puts "Result: #{LDAP.ldap.get_operation_result.code}"
-        #~ puts "Message: #{LDAP.ldap.get_operation_result.message}"
-      #~ end
-    #~ end
-    #~ 
-    #~ command 'drop', 'Drops an account registration.', 'nickname', 'password' do |origin, params|
-      #~ if !LDAP.user_bind params[0], params[1]
-        #~ notice origin, "Invalid password for ^B#{params[0]}^B."
-        #~ next
-      #~ end
-      #~ 
-      #~ dn = $config['ldap']['auth_pattern'].gsub('{username}', origin.nick) + ",#{$config['ldap']['base']}"
-      #~ LDAP.ldap.delete :dn => dn
-      #~ 
-      #~ if LDAP.success?
-        #~ log 'drop', "^B#{params[0]}^B by ^B#{origin}^B"
-        #~ $sock.puts ":NickServ SVS2MODE #{origin.nick} -r+d 0"
-        #~ notice origin, "^B#{params[0]}^B has been dropped."
-      #~ else
-        #~ notice origin, "An error occurred while dropping your account."
-        #~ puts "Result: #{LDAP.ldap.get_operation_result.code}"
-        #~ puts "Message: #{LDAP.ldap.get_operation_result.message}"
-      #~ end
-    #~ end
+    def cmd_register origin, password, email
+      dn = $config['ldap']['auth_pattern'].gsub('{username}', origin.nick) + ",#{$config['ldap']['base']}"
+      attrs = {
+        :cn => origin.nick,
+        :userPassword => `slappasswd -s #{password}`.chomp,
+        :mail => email,
+        :objectclass => ['x-bit-ircUser', 'top'],
+        :uid => origin.nick
+      }
+      
+      LDAP.bot_bind self
+      LDAP.ldap.add :dn => dn, :attributes => attrs
+      if LDAP.success?
+        log 'register', "^B#{origin.nick}^B to ^B#{attrs[:mail]}^B"
+        @link.send_from self.nick, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
+        notice origin, "^B#{origin.nick}^B is now registered to ^B#{email}^B, with the password ^B#{password}^B."
+      else
+        notice origin, "An error occurred while creating your account."
+        puts "Result: #{LDAP.ldap.get_operation_result.code}"
+        puts "Message: #{LDAP.ldap.get_operation_result.message}"
+      end
+    end
+    
+    def cmd_drop origin, nickname, password
+      if !LDAP.user_bind nickname, password
+        notice origin, "Invalid password for ^B#{nickname}^B."
+        return
+      end
+      
+      dn = $config['ldap']['auth_pattern'].gsub('{username}', nickname) + ",#{$config['ldap']['base']}"
+      LDAP.ldap.delete :dn => dn
+      
+      if LDAP.success?
+        log 'drop', "^B#{nickname}^B by ^B#{origin}^B"
+        @link.send_from self.nick, 'SVS2MODE', nickname, '-r+d', 0 # TODO: Use link abstraction!
+        notice origin, "^B#{nickname}^B has been dropped."
+      else
+        notice origin, "An error occurred while dropping your account."
+        puts "Result: #{LDAP.ldap.get_operation_result.code}"
+        puts "Message: #{LDAP.ldap.get_operation_result.message}"
+      end
+    end
 
   end
 end
