@@ -30,7 +30,7 @@ class ServerLink < LineConnection
     args = args.flatten # indirect clone, I hope
     args.unshift ":#{args.shift.nick}" if args.first.is_a? User
     args[(args.first[0,1] == ':') ? 1 : 0].upcase!
-    args.push ":#{args.pop}" if args.last.include? ' '
+    args.push ":#{args.pop}" if args.last.to_s.include? ' '
     puts "Sent #{args.join ' '}"
     send_line args.join ' '
   end

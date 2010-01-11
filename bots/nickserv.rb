@@ -6,21 +6,17 @@ module BitServ
     command 'drop', 'Drops an account registration.', 'nickname', 'password'
     
     def cmd_identify origin, password
-      puts password
+      if LDAP.user_bind origin.nick, password
+        #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
+        notice origin, "You are now identified for ^B#{origin.nick}^B."
+        #sock.puts ":NickServ B danopia :2 failed logins since last login."
+        #sock.puts ":NickServ B danopia :Last failed attempt from: danopia!danopia@danopia-F985FA2D on Jan 01 00:25:26 2010."
+        @link.send_from self.nick, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
+      else
+        notice origin, "Invalid password for ^B#{origin.nick}^B."
+      end
     end
     
-    #~ command ['identify', 'id'], 'Identifies to services for a nickname.', 'password' do |origin, params|
-      #~ if LDAP.user_bind origin.nick, params.shift
-        #~ #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
-        #~ notice origin, "You are now identified for ^B#{origin.nick}^B."
-        #~ #sock.puts ":NickServ B danopia :2 failed logins since last login."
-        #~ #sock.puts ":NickServ B danopia :Last failed attempt from: danopia!danopia@danopia-F985FA2D on Jan 01 00:25:26 2010."
-        #~ $sock.puts ":NickServ SVS2MODE #{origin.nick} +rd #{Time.now.to_i}"
-      #~ else
-        #~ notice origin, "Invalid password for ^B#{origin.nick}^B."
-      #~ end
-    #~ end
-    #~ 
     #~ command 'register', 'Registers a nickname.', 'password', 'email' do |origin, params|
       #~ dn = $config['ldap']['auth_pattern'].gsub('{username}', origin.nick) + ",#{$config['ldap']['base']}"
       #~ password = params.shift
