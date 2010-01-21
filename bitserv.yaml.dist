@@ -2,6 +2,8 @@ uplink:
   hostname: localhost
   port: 7776
   
+  protocol: unrealircd
+  
   password: PASSWORD HERE
 
 hostname: services.tld
