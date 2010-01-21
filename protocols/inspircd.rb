@@ -25,7 +25,6 @@ class InspIRCd < LineConnection
     
     send_handshake
     introduce_bots
-    ping
     
   rescue => ex
     puts ex.class, ex.message, ex.backtrace
@@ -139,6 +138,7 @@ class InspIRCd < LineConnection
         @uplink ||= args[3]
         @servers[@uplink] = args[0]
         puts "New server: #{args[4]}"
+    ping
       
       when 'SMO'
         puts "Server message to #{args[0]}: #{args[1]}"
