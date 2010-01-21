@@ -4,8 +4,6 @@ require 'user'
 require 'channel'
 require 'bot'
 
-require 'server_link'
-
 module BitServ
   class Services
     attr_accessor :bots, :config, :me, :uplinks, :hooks

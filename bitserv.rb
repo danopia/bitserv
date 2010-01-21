@@ -14,6 +14,7 @@ require 'bot'
 require 'services'
 
 require 'protocols/unrealircd'
+require 'protocols/inspircd'
 
 require 'bots/nickserv'
 require 'bots/chanserv'
@@ -27,7 +28,7 @@ services.load_bot BitServ::ChanServ
 services.load_bot BitServ::GitServ
 #services.load_bot BitServ::RelayServ
 
-services.add_uplink BitServ::Protocols::UnrealIRCd
+services.add_uplink BitServ::Protocols::InspIRCd
 
 trap "INT" do
   services.shutdown "Caught interupt"

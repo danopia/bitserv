@@ -4,7 +4,7 @@ require 'user'
 module BitServ
 module Protocols
 class InspIRCd < LineConnection
-  attr_accessor :users, :channels, :servers, :services, :config
+  attr_accessor :users, :channels, :servers, :uplink, :bots, :services, :config, :nicks
 
   def initialize services, config
     super()
@@ -12,11 +12,16 @@ class InspIRCd < LineConnection
     @users = {}
     @channels = {}
     @services = services
-    @me = '00A'
-    @my_name = services.config['hostname']
     @config = config
     
+    @me = '00B' # TODO: user a config
+    @uplink = nil
     @servers = {}
+    @servers[@me] = services.config['hostname']
+    
+    @next_uid = 'AAAAAA'
+    @bots = []
+    @nicks = []
     
     send_handshake
     introduce_bots
@@ -25,6 +30,16 @@ class InspIRCd < LineConnection
   rescue => ex
     puts ex.class, ex.message, ex.backtrace
     raise ex
+  end
+  
+  def bot_uid bot
+    if info = @bots.rassoc(bot)
+      info.first
+    else
+      uid = @next_uid.succ!
+      @bots << [uid, bot]
+      uid
+    end
   end
   
   def send *args
@@ -47,28 +62,27 @@ class InspIRCd < LineConnection
   end
   
   def send_handshake
-    send 'server', @my_name, @config[:pass], 0, @me, @services.config['description']
+    send 'server', @servers[@me], @config[:pass], 0, @me, @services.config['description']
   end
   
   def ping
-    send '8', @me
+    send_from_me 'ping', @me, @uplink
   end
   
   def oper_msg message
-    send_from @me, 'GLOBOPS', message
+    #send_from @me, 'GLOBOPS', message
   end
   
   def force_join channel, bot
-    send_from @me, '~', channel.timestamp.to_i, channel.name, '+', ":@#{bot.nick}"
-    puts "hi"
+    send_from_me 'fjoin', channel.name, channel.timestamp.to_i, '+', "o,#{@me}#{bot_uid bot.nick}"
   end
   
-  def introduce_clone nick, ident=nil, realname=nil, umodes='ioS'
+  def introduce_clone nick, ident=nil, realname=nil, umodes='io'
     ident ||= nick
     realname ||= "Your friendly neighborhood #{nick}"
     
-    send_from @me, 'kill', nick, "#{@me} (Attempt to use service nick)"
-    send '&', nick, 1, Time.now.to_i, ident, @me, @me, 0, "+#{umodes}", '*', realname
+    send_from_me 'uid', "#{@me}#{bot_uid nick}", Time.now.to_i, nick, @servers[@me], @servers[@me], ident, '0.0.0.0', Time.now.to_i, "+#{umodes}", realname
+    send_from "#{@me}#{bot_uid nick}", 'opertype', 'Services'
   end
   
   def introduce_bots burst=true
@@ -90,11 +104,11 @@ class InspIRCd < LineConnection
     
   def message origin, user, message
     user = user.nick if user.is_a? User # TODO: implement User#to_s?
-    send_from origin, '!', user, message
+    send_from "#{@me}#{bot_uid origin}", 'privmsg', user, message
   end
   def notice origin, user, message
     user = user.nick if user.is_a? User # TODO: implement User#to_s?
-    send_from origin, 'B', user, message
+    send_from "#{@me}#{bot_uid origin}", 'notice', user, message
   end
   
   # Shifts +self+ onto the argument list and passes it to the associated
@@ -119,22 +133,17 @@ class InspIRCd < LineConnection
         
       when 'NOTICE'
         puts args.last
-        
-      when 'PROTOCTL'
-        puts "Procotol options: #{args.join(', ').downcase}"
-      
-      when 'PASS'
-        puts "Received a link password"
       
       # TODO: This will FAIL when there are multiple servers on the uplink network!
       when 'SERVER' # server, numeric, description
-        @remote_server = args
-        puts "Uplink server is #{args[0]}, numeric #{args[1]}: #{args[2]}"
+        @uplink ||= args[3]
+        @servers[@uplink] = args[0]
+        puts "New server: #{args[4]}"
       
       when 'SMO'
         puts "Server message to #{args[0]}: #{args[1]}"
       
-      when '&' # nick, server numeric?, timestamp, ident, ip, server, servhops?, umode, cloak, base64, realname
+      when 'UID' # nick, server numeric?, timestamp, ident, ip, server, servhops?, umode, cloak, base64, realname
                # if origin: new nick, timestamp (where origin is old nick)
         if origin
           @users.delete origin.nick
@@ -162,25 +171,25 @@ class InspIRCd < LineConnection
         
         @users[origin.nick] = origin
         
-      when ',' # quit: message
+      when 'QUIT' # quit: message
         emit :client_quit, origin, args.shift
         @users.delete origin.nick
       
-      when '~' # timestamp, channel, list
-        puts "Got user list for #{args[1]}: #{args[2]}"
+      when 'FJOIN' # timestamp, channel, list
+        puts "Got user list for #{args[0]}: #{args[3]}"
         
-        channel = @channels[args[1].downcase]
+        channel = @channels[args[0].downcase]
         if channel
-          channel.users += args[2].split(' ')
-          channel.timestamp = Time.at args[0].to_i
+          channel.users += args[3].split(' ')
+          channel.timestamp = Time.at args[1].to_i
           
-          emit :channel_join, channel, args[2].split(' ')
+          emit :channel_join, channel, args[3].split(' ')
         else
-          channel = Channel.new args[1]
-          channel.users += args[2].split(' ')
-          channel.timestamp = Time.at args[0].to_i
+          channel = Channel.new args[0]
+          channel.users += args[3].split(' ')
+          channel.timestamp = Time.at args[1].to_i
           
-          @channels[args[1].downcase] = channel
+          @channels[args[0].downcase] = channel
           
           emit :new_channel, channel
         end
@@ -199,7 +208,7 @@ class InspIRCd < LineConnection
         puts "Topic for #{args[0]}: #{args.last}"
         emit :got_topic, *args
       
-      when '!' # channel, message
+      when 'PRIVMSG' # channel, message
         puts "#{origin} said on #{args[0]}: #{args[1]}"
         
         if args[0][0,1] == '#'
