@@ -76,8 +76,8 @@ class InspIRCd < LineConnection
     send 'server', @servers[@me], @config[:pass], 0, @me, @services.config['description']
   end
   
-  def ping
-    send_from_me 'ping', @me, @uplink
+  def ping remote=nil
+    send_from_me 'ping', @me, remote || @uplink
   end
   
   def oper_msg message
@@ -204,16 +204,27 @@ class InspIRCd < LineConnection
         puts "Got user list for #{args[0]}: #{args[3]}"
         
         channel = @channels[args[0].downcase]
-        if channel
-          channel.users += args[3].split(' ')
-          channel.timestamp = Time.at args[1].to_i
+        channel ||= Channel.new args[0]
+        
+        channel.timestamp = Time.at args[1].to_i
+        channel.modes = args[2].delete('+')
+        
+        args[3].split(' ').each do |pair|
+          modes, uid = pair.split(',')
+          user = @users[uid]
           
+          if channel.include? user
+            channel.set_user_modes user, modes
+          else
+            channel.add_user user, modes
+          end
+        end
+        
+        p channel.users
+        
+        if @channels[args[0].downcase]
           emit :channel_join, channel, args[3].split(' ')
         else
-          channel = Channel.new args[0]
-          channel.users += args[3].split(' ')
-          channel.timestamp = Time.at args[1].to_i
-          
           @channels[args[0].downcase] = channel
           
           emit :new_channel, channel
