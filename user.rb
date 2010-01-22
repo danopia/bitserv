@@ -1,6 +1,6 @@
 module BitServ
   class User
-    attr_accessor :nick, :numeric, :timestamp, :ident, :ip, :server, :hops, :modes, :cloak, :base64, :realname, :account, :dn, :entry, :uid
+    attr_accessor :nick, :numeric, :timestamp, :ident, :ip, :server, :hops, :modes, :cloak, :base64, :realname, :account, :dn, :entry, :uid, :hostname
     
     def initialize(nick)
       puts "Remote client connected: #{nick}"

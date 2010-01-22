@@ -169,33 +169,32 @@ class InspIRCd < LineConnection
       when 'SMO'
         puts "Server message to #{args[0]}: #{args[1]}"
       
-      when 'UID' # nick, server numeric?, timestamp, ident, ip, server, servhops?, umode, cloak, base64, realname
-               # if origin: new nick, timestamp (where origin is old nick)
-        #if origin
-        #  @users.delete origin.nick
-        #  old_nick = origin.nick
-        #  origin.nick = args.shift
-        #  origin.timestamp = Time.at(args.shift.to_i)
-        #  
-        #  emit :nick_change, old_nick, origin
-        #else
-        #  origin = BitServ::User.new args.shift
-        #  
-        #  origin.numeric = args.shift.to_i
-        #  origin.timestamp = Time.at(args.shift.to_i)
-        #  origin.ident = args.shift
-        #  origin.ip = args.shift
-        #  origin.server = args.shift
-        #  origin.hops = args.shift.to_i
-        #  origin.modes = args.shift
-        #  origin.cloak = args.shift
-        #  origin.base64 = args.shift
-        #  origin.realname = args.shift
-        #  
-        #  emit :new_client, origin
-        #end
-        #
-        #@users[origin.nick] = origin
+      when 'UID'
+        if origin.is_a? User
+          old_nick = origin.nick
+          origin.nick = args.shift
+          origin.timestamp = Time.at(args.shift.to_i)
+          
+          emit :nick_change, old_nick, origin
+        else
+          origin = BitServ::User.new args[2]
+          origin.server = origin
+          
+          origin.uid = args.shift
+          args.shift # connect time. # origin.timestamp = Time.at(args.shift.to_i)
+          args.shift # nick
+          origin.hostname = args.shift
+          origin.cloak = args.shift
+          origin.ident = args.shift
+          origin.ip = args.shift
+          origin.timestamp = Time.at(args.shift.to_i)
+          origin.modes = args.shift
+          origin.realname = args.shift
+          
+          @users[origin.uid] = origin
+          
+          emit :new_client, origin
+        end
         
       when 'QUIT' # quit: message
         emit :client_quit, origin, args.shift
@@ -240,7 +239,8 @@ class InspIRCd < LineConnection
         if args[0][0,1] == '#'
           emit :chan_message, origin, *args
         else
-          emit :priv_message, origin, *args
+          bot = uid_bot(args.first) || args.first
+          emit :priv_message, origin, bot, *args
         end
         
         #if args[1] =~ /^\001ACTION kicks ChanServ/
@@ -254,11 +254,12 @@ class InspIRCd < LineConnection
         # TODO: Do something about this.
         #bots[args[0].downcase].run_command origin, args[1].split if bots.has_key? args[0].downcase
         
-      when 'B' # notice: channel, message
+      when 'NOTICE' # notice: channel, message
         if args[0][0,1] == '#'
           emit :chan_notice, origin, *args
         else
-          emit :priv_notice, origin, *args
+          bot = uid_bot(args.first) || args.first
+          emit :priv_notice, origin, bot, *args
         end
       
       when 'AO' # 10 1262304315 2309 MD5:1f93b28198e5c6a138cf22cf14883316 0 0 0 :Danopia

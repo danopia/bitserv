@@ -196,7 +196,7 @@ class UnrealIRCd < LineConnection
         if args[0][0,1] == '#'
           emit :chan_message, origin, *args
         else
-          emit :priv_message, origin, *args
+          emit :priv_message, origin, args.first, *args
         end
         
         #if args[1] =~ /^\001ACTION kicks ChanServ/
@@ -214,7 +214,7 @@ class UnrealIRCd < LineConnection
         if args[0][0,1] == '#'
           emit :chan_notice, origin, *args
         else
-          emit :priv_notice, origin, *args
+          emit :priv_notice, origin, args.first, *args
         end
       
       when 'AO' # 10 1262304315 2309 MD5:1f93b28198e5c6a138cf22cf14883316 0 0 0 :Danopia

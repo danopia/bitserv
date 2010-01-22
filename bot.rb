@@ -114,11 +114,11 @@ module BitServ
     end
     
     def notice user, message, link=nil
-      (link || @link).notice @nick, user, message.gsub("^B", "\002")
+      (link || @link).notice self, user, message.gsub("^B", "\002")
     end
     
     def log action, message
-      @link.message @nick, @services.config['services-channel'], "#{action.upcase}: #{message.gsub "^B", "\002"}"
+      @link.message self, @services.config['services-channel'], "#{action.upcase}: #{message.gsub "^B", "\002"}"
     end
   end
 end
