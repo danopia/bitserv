@@ -1,6 +1,6 @@
 module BitServ
   class ServicesBot
-    attr_accessor :nick, :ident, :realname, :services
+    attr_accessor :nick, :ident, :realname, :services, :uid, :timestamp
     
     def self.command names, description, *params, &blck
       @@commands ||= {}
