@@ -28,6 +28,7 @@ module BitServ
     
     def initialize services
       @nick ||= self.class.to_s.split('::').last
+      @timestamp = Time.now.to_i
       
       @services = services
       @services.introduce_clone self.nick

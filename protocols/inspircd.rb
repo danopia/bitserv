@@ -32,11 +32,16 @@ class InspIRCd < LineConnection
     if info = @bots.rassoc(bot)
       info.first
     else
-      uid = @next_uid.clone
-      @next_uid.succ!
+      uid = next_uid
       @bots << [uid, bot]
       uid
     end
+  end
+  
+  def next_uid
+    val = @next_uid.clone
+    @next_uid.succ!
+    "#{@me}#{val}"
   end
   
   def uid_bot uid
@@ -58,6 +63,7 @@ class InspIRCd < LineConnection
   
   def send_from origin, *args
     origin = origin.nick if origin.is_a? User
+    origin = origin.uid if origin.is_a? ServicesBot
     args.unshift ":#{origin}"
     send *args
   end
@@ -79,28 +85,33 @@ class InspIRCd < LineConnection
   end
   
   def force_join channel, bot
-    send_from_me 'fjoin', channel.name, channel.timestamp.to_i, '+', "o,#{@me}#{bot_uid bot.nick}"
+    send_from_me 'fjoin', channel.name, channel.timestamp.to_i, '+', "o,#{bot_uid bot}"
   end
   
-  def introduce_clone nick, ident=nil, realname=nil, umodes='io'
+  def introduce_clone uid, ts, nick, ident=nil, realname=nil, umodes='io'
     ident ||= nick
     realname ||= "Your friendly neighborhood #{nick}"
     
-    send_from_me 'uid', "#{@me}#{bot_uid nick}", Time.now.to_i, nick, @servers[@me], @servers[@me], ident, '0.0.0.0', Time.now.to_i, "+#{umodes}", realname
-    send_from "#{@me}#{bot_uid nick}", 'opertype', 'Services'
+    send_from_me 'uid', uid, ts, nick, @servers[@me], @servers[@me], ident, '0.0.0.0', ts, "+#{umodes}", realname
+    send_from uid, 'opertype', 'Services'
   end
   
-  def introduce_bots burst=true
-    if burst
-      send_from_me 'burst'
-      send_from @servers[@me], 'version', "bitserv-0.0.1. #{@me} adFljRn" # TODO: Dynamic version!
-    end
-    
+  def introduce_bot bot
+    bot.uid ||= bot_uid(bot)
+    introduce_clone bot.uid, bot.timestamp, bot.nick
+  end
+  
+  def send_burst
+    send_from_me 'burst'
+    send_from_me 'version', "bitserv-0.0.1. #{@me} adFljRn" # TODO: Dynamic version!
+    introduce_bots
+    send_from_me 'endburst'
+  end
+  
+  def introduce_bots
     @services.bots.each do |bot|
-      introduce_clone bot.nick
+      introduce_bot bot
     end
-    
-    send_from_me 'endburst' if burst
   end
   
   def quit_clone nick, message='Leaving'
@@ -109,11 +120,11 @@ class InspIRCd < LineConnection
     
   def message origin, user, message
     user = user.nick if user.is_a? User # TODO: implement User#to_s?
-    send_from "#{@me}#{bot_uid origin}", 'privmsg', user, message
+    send_from origin, 'privmsg', user, message
   end
   def notice origin, user, message
     user = user.nick if user.is_a? User # TODO: implement User#to_s?
-    send_from "#{@me}#{bot_uid origin}", 'notice', user, message
+    send_from origin, 'notice', user, message
   end
   
   # Shifts +self+ onto the argument list and passes it to the associated
@@ -149,7 +160,7 @@ class InspIRCd < LineConnection
           @uplink = args[3]
           @servers[@uplink] = args[0]
           
-          introduce_bots
+          send_burst
           ping
         end
         
