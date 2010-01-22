@@ -29,7 +29,10 @@ module BitServ
         notice origin, "You are now identified for ^B#{origin.nick}^B."
         #sock.puts ":NickServ B danopia :2 failed logins since last login."
         #sock.puts ":NickServ B danopia :Last failed attempt from: danopia!danopia@danopia-F985FA2D on Jan 01 00:25:26 2010."
-        @link.send_from self.nick, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
+        #@link.send_from self, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
+        
+        origin.cloak = "#{origin.nick}::EighthBit::User"
+        @link.set_cloak self, origin
       else
         notice origin, "Invalid password for ^B#{origin.nick}^B."
       end
@@ -49,7 +52,11 @@ module BitServ
       LDAP.ldap.add :dn => dn, :attributes => attrs
       if LDAP.success?
         log 'register', "^B#{origin.nick}^B to ^B#{attrs[:mail]}^B"
-        @link.send_from self.nick, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
+        #@link.send_from self.nick, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
+        
+        origin.cloak = "#{origin.nick}::EighthBit::User"
+        @link.set_cloak self, origin
+        
         notice origin, "^B#{origin.nick}^B is now registered to ^B#{email}^B, with the password ^B#{password}^B."
       else
         notice origin, "An error occurred while creating your account."

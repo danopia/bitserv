@@ -62,7 +62,6 @@ class InspIRCd < LineConnection
   end
   
   def send_from origin, *args
-    origin = origin.nick if origin.is_a? User
     origin = origin.uid if origin.is_a? ServicesBot
     args.unshift ":#{origin}"
     send *args
@@ -125,6 +124,10 @@ class InspIRCd < LineConnection
   def notice origin, user, message
     user = user.nick if user.is_a? User # TODO: implement User#to_s?
     send_from origin, 'notice', user, message
+  end
+  
+  def set_cloak origin, user
+    send_from origin, 'chghost', user.uid, user.cloak
   end
   
   # Shifts +self+ onto the argument list and passes it to the associated
@@ -233,6 +236,10 @@ class InspIRCd < LineConnection
         channel.remove_user origin
         emit :channel_part, origin, channel, args[1]
       
+      when 'FHOST'
+        origin.cloak = args.first
+        emit :user_cloak_set, channel
+      
       when 'FTOPIC'
         channel = @channels[args.shift.downcase]
         
@@ -240,7 +247,7 @@ class InspIRCd < LineConnection
         channel.topic_setter = args.shift
         channel.topic = args.shift
         
-        emit :channel_topic, channel
+        emit :channel_topic_set, channel
       
       when 'TOPIC'
         channel = @channels[args.shift.downcase]
@@ -249,7 +256,7 @@ class InspIRCd < LineConnection
         channel.topic_setter = "#{origin.nick}!#{origin.ident}@#{origin.cloak}"
         channel.topic = args.shift
         
-        emit :channel_topic, channel
+        emit :channel_topic_set, channel
       
       when 'H' # kick; channel, kickee, message
         puts "#{origin} kicked #{args[1]} from #{args[0]} (#{args[2]})"
