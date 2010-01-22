@@ -191,9 +191,9 @@ class InspIRCd < LineConnection
           user.modes = args.shift
           user.realname = args.shift
           
-          @users[origin.uid] = origin
+          @users[user.uid] = user
           
-          emit :new_client, origin
+          emit :new_client, user
         end
         
       when 'QUIT' # quit: message
