@@ -46,7 +46,7 @@ class InspIRCd < LineConnection
   
   def uid_bot uid
     if info = @bots.assoc(uid)
-      uid.last
+      info.last
     else
       nil
     end

@@ -39,8 +39,8 @@ module BitServ
       end
     end
     
-    def on_priv_message link, from, to, message
-      return unless to.downcase == self.nick.downcase
+    def on_priv_message link, from, bot, to, message
+      return if (bot != self) || (to.downcase == self.nick.downcase)
       @link = link
       
       params = message.split
