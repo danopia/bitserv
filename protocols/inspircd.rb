@@ -290,12 +290,12 @@ class InspIRCd < LineConnection
         send_from @me, 'globops', 'Finished synchronizing with network in -0.01 ms.' # TODO: Use a method (it exists)
         puts "Done syncing."
       
-      when '9'
+      when 'PONG'
         puts "Server ponged."
       
-      when '8'
+      when 'PING'
         puts "Server pinged."
-        send_from @me, '9', @me, args
+        send_from_me, 'pong', @me, args.first
       
       when 'GLOBOPS'
         puts "Global op message: #{args.last}"
