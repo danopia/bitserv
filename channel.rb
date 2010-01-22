@@ -15,6 +15,9 @@ module BitServ
     def add_user user, modes=''
       @users[user] = modes
     end
+    def remove_user user
+      @users.delete user
+    end
     
     def user_modes user
       @users[user]

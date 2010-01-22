@@ -177,19 +177,19 @@ class InspIRCd < LineConnection
           
           emit :nick_change, old_nick, origin
         else
-          origin = BitServ::User.new args[2]
-          origin.server = origin
+          user = BitServ::User.new args[2]
+          user.server = origin
           
-          origin.uid = args.shift
-          args.shift # connect time. # origin.timestamp = Time.at(args.shift.to_i)
+          user.uid = args.shift
+          args.shift # connection time. # user.timestamp = Time.at(args.shift.to_i)
           args.shift # nick
-          origin.hostname = args.shift
-          origin.cloak = args.shift
-          origin.ident = args.shift
-          origin.ip = args.shift
-          origin.timestamp = Time.at(args.shift.to_i)
-          origin.modes = args.shift
-          origin.realname = args.shift
+          user.hostname = args.shift
+          user.cloak = args.shift
+          user.ident = args.shift
+          user.ip = args.shift
+          user.timestamp = Time.at(args.shift.to_i)
+          user.modes = args.shift
+          user.realname = args.shift
           
           @users[origin.uid] = origin
           
@@ -229,6 +229,11 @@ class InspIRCd < LineConnection
           
           emit :new_channel, channel
         end
+      
+      when 'PART'
+        channel = @channels[args[0].downcase]
+        channel.remove_user origin
+        emit :channel_part, origin, channel, args[1]
       
       when 'H' # kick; channel, kickee, message
         puts "#{origin} kicked #{args[1]} from #{args[0]} (#{args[2]})"
