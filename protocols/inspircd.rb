@@ -220,8 +220,6 @@ class InspIRCd < LineConnection
           end
         end
         
-        p channel.users
-        
         if @channels[args[0].downcase]
           emit :channel_join, channel, args[3].split(' ')
         else
@@ -234,6 +232,24 @@ class InspIRCd < LineConnection
         channel = @channels[args[0].downcase]
         channel.remove_user origin
         emit :channel_part, origin, channel, args[1]
+      
+      when 'FTOPIC'
+        channel = @channels[args.shift.downcase]
+        
+        channel.topic_ts = args.shift
+        channel.topic_setter = args.shift
+        channel.topic = args.shift
+        
+        emit :channel_topic, channel
+      
+      when 'TOPIC'
+        channel = @channels[args.shift.downcase]
+        
+        channel.topic_ts = Time.now.to_i
+        channel.topic_setter = "#{origin.nick}!#{origin.ident}@#{origin.cloak}"
+        channel.topic = args.shift
+        
+        emit :channel_topic, channel
       
       when 'H' # kick; channel, kickee, message
         puts "#{origin} kicked #{args[1]} from #{args[0]} (#{args[2]})"
@@ -295,7 +311,7 @@ class InspIRCd < LineConnection
       
       when 'PING'
         puts "Server pinged."
-        send_from_me, 'pong', @me, args.first
+        send_from_me 'pong', @me, args.first
       
       when 'GLOBOPS'
         puts "Global op message: #{args.last}"
