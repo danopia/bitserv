@@ -23,9 +23,6 @@ class InspIRCd < LineConnection
     @bots = []
     @nicks = []
     
-    send_handshake
-    introduce_bots
-    
   rescue => ex
     puts ex.class, ex.message, ex.backtrace
     raise ex
@@ -87,7 +84,7 @@ class InspIRCd < LineConnection
   def introduce_bots burst=true
     if burst
       send_from_me 'burst'
-      send_from_me 'version', "bitserv-0.0.1. #{@me} adFljRn" # TODO: Dynamic version!
+      send_from @servers[@me], 'version', "bitserv-0.0.1. #{@me} adFljRn" # TODO: Dynamic version!
     end
     
     @services.bots.each do |bot|
@@ -133,12 +130,20 @@ class InspIRCd < LineConnection
       when 'NOTICE'
         puts args.last
       
+      when 'CAPAB'
+        send_handshake if args.first == 'END'
+      
       # TODO: This will FAIL when there are multiple servers on the uplink network!
       when 'SERVER' # server, numeric, description
-        @uplink ||= args[3]
-        @servers[@uplink] = args[0]
+        unless @uplink
+          @uplink = args[3]
+          @servers[@uplink] = args[0]
+          
+          introduce_bots
+          ping
+        end
+        
         puts "New server: #{args[4]}"
-    ping
       
       when 'SMO'
         puts "Server message to #{args[0]}: #{args[1]}"

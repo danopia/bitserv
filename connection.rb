@@ -18,7 +18,7 @@ class LineConnection < EventMachine::Connection
   end
 		
   def send_line line
-    send_data "#{line}\n"
+    send_data "#{line}\r\n"
   end
 
   def receive_data data
