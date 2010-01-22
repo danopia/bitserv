@@ -39,6 +39,14 @@ class InspIRCd < LineConnection
     end
   end
   
+  def uid_bot uid
+    if info = @bots.assoc(uid)
+      uid.last
+    else
+      nil
+    end
+  end
+  
   def send *args
     args = args.flatten # indirect clone, I hope
     args.unshift ":#{args.shift.nick}" if args.first.is_a? User
