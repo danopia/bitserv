@@ -116,6 +116,7 @@ class InspIRCd < LineConnection
   def receive_line line
     super # prints the data
     
+    return if line.size < 1
     parts = line.split ' :', 2
     args = parts.shift.split ' '
     args << parts.shift if parts.any?
@@ -150,31 +151,31 @@ class InspIRCd < LineConnection
       
       when 'UID' # nick, server numeric?, timestamp, ident, ip, server, servhops?, umode, cloak, base64, realname
                # if origin: new nick, timestamp (where origin is old nick)
-        if origin
-          @users.delete origin.nick
-          old_nick = origin.nick
-          origin.nick = args.shift
-          origin.timestamp = Time.at(args.shift.to_i)
-          
-          emit :nick_change, old_nick, origin
-        else
-          origin = BitServ::User.new args.shift
-          
-          origin.numeric = args.shift.to_i
-          origin.timestamp = Time.at(args.shift.to_i)
-          origin.ident = args.shift
-          origin.ip = args.shift
-          origin.server = args.shift
-          origin.hops = args.shift.to_i
-          origin.modes = args.shift
-          origin.cloak = args.shift
-          origin.base64 = args.shift
-          origin.realname = args.shift
-          
-          emit :new_client, origin
-        end
-        
-        @users[origin.nick] = origin
+        #if origin
+        #  @users.delete origin.nick
+        #  old_nick = origin.nick
+        #  origin.nick = args.shift
+        #  origin.timestamp = Time.at(args.shift.to_i)
+        #  
+        #  emit :nick_change, old_nick, origin
+        #else
+        #  origin = BitServ::User.new args.shift
+        #  
+        #  origin.numeric = args.shift.to_i
+        #  origin.timestamp = Time.at(args.shift.to_i)
+        #  origin.ident = args.shift
+        #  origin.ip = args.shift
+        #  origin.server = args.shift
+        #  origin.hops = args.shift.to_i
+        #  origin.modes = args.shift
+        #  origin.cloak = args.shift
+        #  origin.base64 = args.shift
+        #  origin.realname = args.shift
+        #  
+        #  emit :new_client, origin
+        #end
+        #
+        #@users[origin.nick] = origin
         
       when 'QUIT' # quit: message
         emit :client_quit, origin, args.shift
