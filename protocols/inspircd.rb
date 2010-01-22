@@ -32,7 +32,8 @@ class InspIRCd < LineConnection
     if info = @bots.rassoc(bot)
       info.first
     else
-      uid = @next_uid.succ!
+      uid = @next_uid.clone
+      @next_uid.succ!
       @bots << [uid, bot]
       uid
     end
