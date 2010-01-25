@@ -21,13 +21,19 @@ module BitServ
       end
     end
     
+    def create_cloak account
+      entries = LDAP.ldap.search :base => account[:dn].first, :filter => Net::LDAP::Filter.eq('objectclass', 'x-bit-ircGroupRole')
+      return nil if entries.nil? || entries.empty?
+      entry = entries.first
+      "#{account[:uid].first}/#{entry[:ou].first}/#{entry[:cn].first}"
+    end
+    
     command ['identify', 'id'], 'Identifies to services for a nickname.', 'password'
     command 'register', 'Registers a nickname.', 'password', 'email'
     command 'drop', 'Drops an account registration.', 'nickname', 'password'
     command 'info', 'Displays information on registrations.', 0, 'account'
     
     def cmd_identify origin, password
-      p origin.nick, password
       if LDAP.user_bind origin.nick, password
         #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
         notice origin, "You are now identified for ^B#{origin.nick}^B."
@@ -35,8 +41,8 @@ module BitServ
         #sock.puts ":NickServ B danopia :Last failed attempt from: danopia!danopia@danopia-F985FA2D on Jan 01 00:25:26 2010."
         #@link.send_from self, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
         
-        origin.cloak = "#{origin.nick}::EighthBit::User"
-        @services.uplink.set_cloak self, origin
+        origin.cloak = create_cloak origin.entry
+        @services.uplink.set_cloak self, origin if origin.cloak
       else
         notice origin, "Invalid password for ^B#{origin.nick}^B."
       end
@@ -46,12 +52,12 @@ module BitServ
       account ||= origin.nick
       
       dn = @services.config['ldap']['auth_pattern'].gsub('{username}', account) + ",#{@services.config['ldap']['base']}"
-      entries = LDAP.ldap.search :base => dn
+      entries = LDAP.ldap.search :base => dn, :filter => Net::LDAP::Filter.eq('objectclass', 'x-bit-ircUser')
       
       if entries
         entry = entries.shift
         notice origin, "Information on ^B#{entry[:uid].first}^B (account #{account}):"
-        notice origin, "Cloak      : #{entry[:uid].first}::EighthBit::User"
+        notice origin, "Cloak      : #{create_cloak entry}"
         notice origin, "Name       : #{entry[:cn].first}"
         notice origin, "Email      : #{entry[:mail].first}"
         notice origin, "URL        : #{entry[:"x-bit-url"].first}"
