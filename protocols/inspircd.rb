@@ -146,7 +146,7 @@ class InspIRCd < LineConnection
   # Shifts +self+ onto the argument list and passes it to the associated
   # Services instance.
   def emit event, *args
-    @services.emit event, self, *args
+    @services.emit event, *args
   end
   
   def receive_line line

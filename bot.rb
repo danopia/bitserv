@@ -40,9 +40,8 @@ module BitServ
       end
     end
     
-    def on_priv_message link, from, bot, to, message
+    def on_priv_message from, bot, to, message
       return if (bot != self) || (to.downcase == self.nick.downcase)
-      @link = link
       
       @@commands ||= {}
       @@commands[self.class] ||= {}
@@ -109,16 +108,16 @@ module BitServ
       "No help available for ^B#{args.join ' '}^B."
     end
     
-    def on_new_channel link, channel
-      link.force_join channel, self if @services.is_services_channel? channel
+    def on_new_channel  channel
+      @services.link.force_join channel, self if @services.is_services_channel? channel
     end
     
-    def notice user, message, link=nil
-      (link || @link).notice self, user, message.gsub("^B", "\002")
+    def notice user, message
+      @services.link.notice self, user, message.gsub("^B", "\002")
     end
     
     def log action, message
-      @link.message self, @services.config['services-channel'], "#{action.upcase}: #{message.gsub "^B", "\002"}"
+      @services.link.message self, @services.config['services-channel'], "#{action.upcase}: #{message.gsub "^B", "\002"}"
     end
   end
 end

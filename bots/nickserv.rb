@@ -3,21 +3,21 @@ require 'ldap'
 module BitServ
   class NickServ < ServicesBot
   
-    def on_new_client link, client
-      check_nick_reg link, client
+    def on_new_client client
+      check_nick_reg client
     end
     
-    def on_nick_change link, old_nick, client
-      check_nick_reg link, client
+    def on_nick_change old_nick, client
+      check_nick_reg client
     end
     
-    def check_nick_reg link, client
+    def check_nick_reg client
       client.dn = @services.config['ldap']['auth_pattern'].gsub('{username}', client.nick) + ",#{@services.config['ldap']['base']}"
       
       client.entry = LDAP.ldap.search :base => client.dn
       if client.entry
         client.entry = client.entry.first
-        notice client, "This nickname is registered. Please choose a different nickname, or identify via ^B/msg #{@nick} identify <password>^B.", link
+        notice client, "This nickname is registered. Please choose a different nickname, or identify via ^B/msg #{@nick} identify <password>^B."
       end
     end
     
@@ -35,7 +35,7 @@ module BitServ
         #@link.send_from self, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
         
         origin.cloak = "#{origin.nick}::EighthBit::User"
-        @link.set_cloak self, origin
+        @services.link.set_cloak self, origin
       else
         notice origin, "Invalid password for ^B#{origin.nick}^B."
       end
@@ -58,7 +58,7 @@ module BitServ
         #@link.send_from self.nick, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
         
         origin.cloak = "#{origin.nick}::EighthBit::User"
-        @link.set_cloak self, origin
+        @services.link.set_cloak self, origin
         
         notice origin, "^B#{origin.nick}^B is now registered to ^B#{email}^B, with the password ^B#{password}^B."
       else
@@ -79,7 +79,7 @@ module BitServ
       
       if LDAP.success?
         log 'drop', "^B#{nickname}^B by ^B#{origin}^B"
-        @link.send_from self.nick, 'SVS2MODE', nickname, '-r+d', 0 # TODO: Use link abstraction!
+        @services.link.send_from self.nick, 'SVS2MODE', nickname, '-r+d', 0 # TODO: Use link abstraction!
         notice origin, "^B#{nickname}^B has been dropped."
       else
         notice origin, "An error occurred while dropping your account."
