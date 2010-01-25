@@ -62,6 +62,7 @@ module BitServ
           params.pop until params.size <= info[:params].size
           send "cmd_#{command}", from, *params
         end
+        
       else
         p respond_to?("cmd_#{command}")
         p @@commands[self.class].has_key?(command.upcase)
@@ -74,43 +75,38 @@ module BitServ
     def cmd_help origin, args
       if args.size == 0
         notice origin, "****** ^B#{@nick} Help^B ******"
-        
-        file = File.join(File.dirname(__FILE__), 'help', @nick.downcase, 'synopsis') + '.txt'
-        File.read(file).chomp.each_line do |line|
-          notice origin, (line == '' ? '^B^B' : line)
-        end
-        
+        notice origin, load_help(['synopsis'])
         notice origin, "^B^B"
         notice origin, "The following commands are available:"
-        @@commands[self.class].each_pair do |cmd, data|
+        @@commands[self.class].each_pair {|cmd, data|
           next if data.has_key? :alias_of
           notice origin, "^B#{cmd.ljust 16}^B #{data[:description]}"
-        end
+        }
         notice origin, "^B^B"
-        
         notice origin, "***** ^BEnd of Help^B *****"
         
-      elsif args.include? '..'
-        notice origin, "You can stop hacking now."
-        #notice origin, "No help available for ^B#{args.join ' '}^B."
-        
+      elsif have_help? args
+        notice origin, "****** ^B#{@nick} Help^B ******"
+        notice origin, "Help for ^B#{args.join(' ').upcase}^B:"
+        notice origin, "^B^B"
+        notice origin, load_help(args)
+        notice origin, "***** ^BEnd of Help^B *****"
       else
-        file = File.join(File.dirname(__FILE__), 'help', @nick.downcase, *args) + '.txt'
-        if File.exists? file
-        
-          notice origin, "****** ^B#{@nick} Help^B ******"
-          notice origin, "Help for ^B#{args.join(' ').upcase}^B:"
-          notice origin, "^B^B"
-          
-          File.read(file).chomp.each_line do |line|
-            notice origin, (line == "\n" ? '^B^B' : line)
-          end
-          notice origin, "***** ^BEnd of Help^B *****"
-          
-        else
-          notice origin, "No help available for ^B#{args.join ' '}^B."
-        end
+        notice origin, "No help available for ^B#{args.join ' '}^B."
       end
+    end
+    
+    def help_path args
+      return false if args.include? '..'
+      args.map! {|piece| piece.downcase }
+      File.join(File.dirname(__FILE__), 'help', @nick.downcase, *args) + '.txt'
+    end
+    def have_help? args
+      File.exists? help_path(args)
+    end
+    def load_help args
+      return File.read(help_path(args)) if have_help? args
+      "No help available for ^B#{args.join ' '}^B."
     end
     
     def on_new_channel link, channel
