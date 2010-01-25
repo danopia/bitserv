@@ -119,11 +119,24 @@ class InspIRCd < LineConnection
     
   def message origin, user, message
     user = user.nick if user.is_a? User # TODO: implement User#to_s?
-    send_from origin, 'privmsg', user, message
+    
+    multiline message do |line|
+      send_from origin, 'privmsg', user, line
+    end
   end
   def notice origin, user, message
     user = user.nick if user.is_a? User # TODO: implement User#to_s?
-    send_from origin, 'notice', user, message
+    
+    multiline message do |line|
+      send_from origin, 'notice', user, line
+    end
+  end
+  
+  def multiline message
+    message.each_line do |line|
+      line = "\002\002\n" if line == "\n"
+      yield line.chomp
+    end
   end
   
   def set_cloak origin, user
