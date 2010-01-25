@@ -13,7 +13,7 @@ require 'bot'
 
 require 'services'
 
-require 'protocols/unrealircd'
+#require 'protocols/unrealircd'
 require 'protocols/inspircd'
 
 require 'bots/nickserv'
