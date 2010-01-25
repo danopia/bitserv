@@ -109,15 +109,15 @@ module BitServ
     end
     
     def on_new_channel  channel
-      @services.link.force_join channel, self if @services.is_services_channel? channel
+      @services.uplink.force_join channel, self if @services.is_services_channel? channel
     end
     
     def notice user, message
-      @services.link.notice self, user, message.gsub("^B", "\002")
+      @services.uplink.notice self, user, message.gsub("^B", "\002")
     end
     
     def log action, message
-      @services.link.message self, @services.config['services-channel'], "#{action.upcase}: #{message.gsub "^B", "\002"}"
+      @services.uplink.message self, @services.config['services-channel'], "#{action.upcase}: #{message.gsub "^B", "\002"}"
     end
   end
 end

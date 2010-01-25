@@ -35,7 +35,7 @@ module BitServ
         #@link.send_from self, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
         
         origin.cloak = "#{origin.nick}::EighthBit::User"
-        @services.link.set_cloak self, origin
+        @services.uplink.set_cloak self, origin
       else
         notice origin, "Invalid password for ^B#{origin.nick}^B."
       end
@@ -58,7 +58,7 @@ module BitServ
         #@link.send_from self.nick, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
         
         origin.cloak = "#{origin.nick}::EighthBit::User"
-        @services.link.set_cloak self, origin
+        @services.uplink.set_cloak self, origin
         
         notice origin, "^B#{origin.nick}^B is now registered to ^B#{email}^B, with the password ^B#{password}^B."
       else
@@ -79,7 +79,7 @@ module BitServ
       
       if LDAP.success?
         log 'drop', "^B#{nickname}^B by ^B#{origin}^B"
-        @services.link.send_from self.nick, 'SVS2MODE', nickname, '-r+d', 0 # TODO: Use link abstraction!
+        @services.uplink.send_from self.nick, 'SVS2MODE', nickname, '-r+d', 0 # TODO: Use link abstraction!
         notice origin, "^B#{nickname}^B has been dropped."
       else
         notice origin, "An error occurred while dropping your account."
