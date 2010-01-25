@@ -1,7 +1,3 @@
-require 'user'
-require 'channel'
-require 'bot'
-
 require 'services'
 
 #require 'protocols/unrealircd'
