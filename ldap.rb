@@ -3,7 +3,7 @@ require 'net/ldap'
 
 module LDAP
   def self.base
-    $services.config['base']
+    $services.config['ldap']['base']
   end
 
   def self.ldap
@@ -26,6 +26,7 @@ module LDAP
   ################
   
   def self.bind node=nil, pass=nil
+    p node, pass
     ldap.auth "#{node},#{base}", pass
   end
   
