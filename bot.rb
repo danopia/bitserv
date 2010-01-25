@@ -64,7 +64,7 @@ module BitServ
         end
       else
         p respond_to?("cmd_#{command}")
-        p @@commands.has_key?(command.upcase)
+        p @@commands[self.class].has_key?(command.upcase)
         notice from, "Invalid command. Use ^B/msg #{@nick} help^B for a command listing."
       end
       
