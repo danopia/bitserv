@@ -39,7 +39,7 @@ module BitServ
     
     def load_bots
       @config['bots'].each do |bot|
-        require File.join(File.dirname(__FILE__), 'bots', bot['class'].downcase + '.rb')
+        require File.join(File.dirname(__FILE__), 'bots', bot['class'].downcase)
         @bots << BitServ.const_get(bot['class']).new(self) # (self, bot)
       end
     end
