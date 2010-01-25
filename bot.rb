@@ -4,6 +4,7 @@ module BitServ
     
     def self.command names, description, *params, &blck
       @@commands ||= {}
+      @@commands[self] ||= {}
       
       min_params = params.size
       min_params = params.shift if params.first.is_a? Fixnum
@@ -15,13 +16,13 @@ module BitServ
       }
       
       names = [names] if names.is_a? String
-      @@commands[names.first.upcase] = data
+      @@commands[self][names.first.upcase] = data
       
       if names.size > 1
         data = data.clone
         data[:alias_of] = names.shift.upcase
         names.each do |name|
-          @@commands[name.upcase] = data
+          @@commands[self][name.upcase] = data
         end
       end
     end
@@ -43,14 +44,17 @@ module BitServ
       return if (bot != self) || (to.downcase == self.nick.downcase)
       @link = link
       
+      @@commands ||= {}
+      @@commands[self.class] ||= {}
+      
       params = message.split
       command = params.shift.downcase
       
       if command == 'help'
         cmd_help from, params # exception here because of the unlimited args
         
-      elsif respond_to?("cmd_#{command}") && @@commands.has_key?(command.upcase)
-        info = @@commands[command.upcase]
+      elsif respond_to?("cmd_#{command}") && @@commands[self.class].has_key?(command.upcase)
+        info = @@commands[self.class][command.upcase]
         if params.size < info[:min_params]
           notice from, "Insufficient parameters for ^B#{command}^B."
           notice from, "Syntax: #{command} <#{info[:params].join '> <'}>"
@@ -78,7 +82,7 @@ module BitServ
         
         notice origin, "^B^B"
         notice origin, "The following commands are available:"
-        @@commands.each_pair do |cmd, data|
+        @@commands[self.class].each_pair do |cmd, data|
           next if data.has_key? :alias_of
           notice origin, "^B#{cmd.ljust 16}^B #{data[:description]}"
         end
