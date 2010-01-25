@@ -38,9 +38,10 @@ module BitServ
     end
     
     def load_bots
-      @config['bots'].each do |bot|
-        require File.join(File.dirname(__FILE__), 'bots', bot['class'].downcase)
-        @bots << BitServ.const_get(bot['class']).new(self) # (self, bot)
+      @config['bots'].each do |conf|
+        require File.join(File.dirname(__FILE__), 'bots', conf['class'].downcase)
+        bot = BitServ.const_get(conf['class']).new(self, conf)
+        @uplink.introduce_bot bot if running?
       end
     end
     
@@ -63,12 +64,6 @@ module BitServ
     def uplink= type
       return false if running? # TODO: error
       @uplink_type = type
-    end
-  
-    def introduce_clone nick, ident=nil, realname=nil, umodes='ioS'
-      ident ||= nick
-      realname ||= "Your friendly neighborhood #{nick}"
-      @uplink.introduce_clone nick, ident, realname, umodes
     end
     
     def message origin, user, message

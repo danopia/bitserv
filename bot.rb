@@ -1,6 +1,6 @@
 module BitServ
   class ServicesBot
-    attr_accessor :nick, :ident, :realname, :services, :uid, :timestamp
+    attr_accessor :nick, :ident, :realname, :services, :config, :uid, :timestamp
     
     def self.command names, description, *params, &blck
       @@commands ||= {}
@@ -27,12 +27,13 @@ module BitServ
       end
     end
     
-    def initialize services
-      @nick ||= self.class.to_s.split('::').last
+    def initialize services, config
+      @nick ||= config['nick'] || self.class.to_s.split('::').last
       @timestamp = Time.now.to_i
       
       @services = services
-      @services.introduce_clone self.nick if @services.running?
+      @config = config
+      @services.bots << self
       
       # Register hooks
       self.methods.each do |method|
