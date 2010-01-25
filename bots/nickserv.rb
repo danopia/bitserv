@@ -1,3 +1,5 @@
+require 'ldap'
+
 module BitServ
   class NickServ < ServicesBot
   
@@ -10,7 +12,7 @@ module BitServ
     end
     
     def check_nick_reg link, client
-      client.dn = $config['ldap']['auth_pattern'].gsub('{username}', client.nick) + ",#{$config['ldap']['base']}"
+      client.dn = @services.config['ldap']['auth_pattern'].gsub('{username}', client.nick) + ",#{@services.config['ldap']['base']}"
       
       client.entry = LDAP.ldap.search :base => client.dn
       if client.entry
@@ -39,7 +41,7 @@ module BitServ
     end
     
     def cmd_register origin, password, email
-      dn = $config['ldap']['auth_pattern'].gsub('{username}', origin.nick) + ",#{$config['ldap']['base']}"
+      dn = @services.config['ldap']['auth_pattern'].gsub('{username}', origin.nick) + ",#{@services.config['ldap']['base']}"
       attrs = {
         :cn => origin.nick,
         :userPassword => `slappasswd -s #{password}`.chomp,
@@ -71,7 +73,7 @@ module BitServ
         return
       end
       
-      dn = $config['ldap']['auth_pattern'].gsub('{username}', nickname) + ",#{$config['ldap']['base']}"
+      dn = @services.config['ldap']['auth_pattern'].gsub('{username}', nickname) + ",#{@services.config['ldap']['base']}"
       LDAP.ldap.delete :dn => dn
       
       if LDAP.success?

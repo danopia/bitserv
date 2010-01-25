@@ -1,12 +1,3 @@
-require 'yaml'
-require 'socket'
-
-config = YAML.load open('bitserv.yaml')
-$config = config
-me = config['hostname']
-
-require 'ldap'
-
 require 'user'
 require 'channel'
 require 'bot'
@@ -22,6 +13,7 @@ require 'bots/gitserv'
 #require 'bots/relayserv'
 
 services = BitServ::Services.new 'bitserv.yaml'
+$services = services
 
 services.load_bot BitServ::NickServ
 services.load_bot BitServ::ChanServ
