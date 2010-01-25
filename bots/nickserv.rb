@@ -48,7 +48,7 @@ module BitServ
       dn = @services.config['ldap']['auth_pattern'].gsub('{username}', account) + ",#{@services.config['ldap']['base']}"
       entries = LDAP.ldap.search :base => dn
       
-      if entries.any?
+      if entries
         entry = entries.shift
         notice origin, "Information on ^B#{entry[:uid].first}^B (account #{account}):"
         notice origin, "Cloak      : #{entry[:uid].first}::EighthBit::User"
