@@ -6,6 +6,14 @@ uplink:
   
   password: PASSWORD HERE
 
+bots:
+- class: NickServ
+  realname: Nickname Services
+- class: ChanServ
+  realname: Channel Services
+- class: GitServ
+  realname: GitHub Services
+
 hostname: services.tld
 description: BitServ IRC Services
 

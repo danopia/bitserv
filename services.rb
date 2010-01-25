@@ -28,6 +28,8 @@ module BitServ
       @bots = []
       @hooks = {}
       @running = false
+      
+      load_bots
     end
     
     def shutdown message='Shutting down'
@@ -35,8 +37,11 @@ module BitServ
       @uplink.oper_msg message
     end
     
-    def load_bot type, *args
-      @bots << type.new(self, *args)
+    def load_bots
+      @config['bots'].each do |bot|
+        require File.join(File.dirname(__FILE__), 'bots', bot['class'].downcase + '.rb')
+        @bots << BitServ.const_get(bot['class']).new(self) # (self, bot)
+      end
     end
     
     def add_handler event, bot, &blck

@@ -7,18 +7,8 @@ require 'services'
 #require 'protocols/unrealircd'
 require 'protocols/inspircd'
 
-require 'bots/nickserv'
-require 'bots/chanserv'
-require 'bots/gitserv'
-#require 'bots/relayserv'
-
 services = BitServ::Services.new 'bitserv.yaml'
 $services = services
-
-services.load_bot BitServ::NickServ
-services.load_bot BitServ::ChanServ
-services.load_bot BitServ::GitServ
-#services.load_bot BitServ::RelayServ
 
 services.uplink = BitServ::Protocols::InspIRCd
 
