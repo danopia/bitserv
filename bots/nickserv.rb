@@ -24,6 +24,7 @@ module BitServ
     command ['identify', 'id'], 'Identifies to services for a nickname.', 'password'
     command 'register', 'Registers a nickname.', 'password', 'email'
     command 'drop', 'Drops an account registration.', 'nickname', 'password'
+    command 'info', 'Displays information on registrations.', 0, 'account'
     
     def cmd_identify origin, password
       p origin.nick, password
@@ -38,6 +39,32 @@ module BitServ
         @services.uplink.set_cloak self, origin
       else
         notice origin, "Invalid password for ^B#{origin.nick}^B."
+      end
+    end
+    
+    def cmd_info origin, account=nil
+      account ||= origin.nick
+      
+      dn = @services.config['ldap']['auth_pattern'].gsub('{username}', account) + ",#{@services.config['ldap']['base']}"
+      entries = LDAP.ldap.search :base => dn
+      
+      if entries.any?
+        entry = entries.shift
+        notice origin, "Information on ^B#{entry[:uid].first}^B (account #{account}):"
+        notice origin, "Cloak      : #{entry[:uid].first}::EighthBit::User"
+        notice origin, "Name       : #{entry[:cn].first}"
+        notice origin, "Email      : #{entry[:mail].first}"
+        notice origin, "URL        : #{entry[:"x-bit-url"].first}"
+        
+        first = "Groups"
+        entries.each do |group|
+          notice origin, "#{first}     : #{group[:ou].first} (#{group[:cn].first})"
+          first = "      "
+        end
+        
+        notice origin, "*** ^BEnd of Info^B ***"
+      else
+        notice origin, "^B#{account}^B is not registered."
       end
     end
     
