@@ -47,6 +47,7 @@ module BitServ
       @@commands[self.class] ||= {}
       
       params = message.split
+      return if params.empty?
       command = params.shift.downcase
       
       if command == 'help'
