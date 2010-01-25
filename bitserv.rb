@@ -1,12 +1,7 @@
 require 'services'
 
-#require 'protocols/unrealircd'
-require 'protocols/inspircd'
-
 services = BitServ::Services.new 'bitserv.yaml'
 $services = services
-
-services.uplink = BitServ::Protocols::InspIRCd
 
 trap "INT" do
   services.shutdown "Caught interupt"

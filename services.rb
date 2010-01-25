@@ -30,6 +30,7 @@ module BitServ
       @running = false
       
       load_bots
+      load_uplink
     end
     
     def shutdown message='Shutting down'
@@ -59,6 +60,13 @@ module BitServ
     
     def is_services_channel? channel
       channel.name.downcase == @config['services-channel'].downcase
+    end
+    
+    def load_uplink
+      proto = @config['uplink']['protocol']
+      require File.join(File.dirname(__FILE__), 'protocols', proto)
+      proto = BitServ::Protocols.constants.find {|const| const.downcase == proto.downcase }
+      self.uplink = BitServ::Protocols.const_get proto
     end
     
     def uplink= type
