@@ -72,7 +72,7 @@ class InspIRCd < LineConnection
   end
   
   def send_handshake
-    send 'server', @servers[@me], @config[:pass], 0, @me, @services.config['description']
+    send 'server', @servers[@me], @config['password'], 0, @me, @services.config['description']
   end
   
   def ping remote=nil

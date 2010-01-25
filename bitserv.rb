@@ -20,7 +20,7 @@ services.load_bot BitServ::ChanServ
 services.load_bot BitServ::GitServ
 #services.load_bot BitServ::RelayServ
 
-services.add_uplink BitServ::Protocols::InspIRCd
+services.uplink = BitServ::Protocols::InspIRCd
 
 trap "INT" do
   services.shutdown "Caught interupt"

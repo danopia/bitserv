@@ -26,6 +26,7 @@ module BitServ
     command 'drop', 'Drops an account registration.', 'nickname', 'password'
     
     def cmd_identify origin, password
+      p origin.nick, password
       if LDAP.user_bind origin.nick, password
         #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
         notice origin, "You are now identified for ^B#{origin.nick}^B."

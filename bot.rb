@@ -32,7 +32,7 @@ module BitServ
       @timestamp = Time.now.to_i
       
       @services = services
-      @services.introduce_clone self.nick
+      @services.introduce_clone self.nick if @services.running?
       
       # Register hooks
       self.methods.each do |method|
