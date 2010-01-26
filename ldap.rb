@@ -40,6 +40,12 @@ module LDAP
     ldap.search *params
   end
   
+  def self.first *params
+    entries = search *params
+    return nil if entries.nil? || entries.empty?
+    entries.first
+  end
+  
   ################
   ## Bind stuff ##
   ################
