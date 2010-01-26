@@ -45,7 +45,6 @@ module LDAP
   ################
   
   def self.bind node=nil, pass=nil
-    p node, pass
     ldap.auth "#{node},#{base}", pass
   end
   
