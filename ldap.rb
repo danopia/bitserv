@@ -29,15 +29,17 @@ module LDAP
     ldap.get_operation_result.code == 0
   end
   
-  def self.search base, conditions=nil
-    params = {:base => base}
+  def self.search base, conditions=nil, params={}
+    params[:base] = base
+    
     if conditions
       params[:filter] = Net::LDAP::Filter.eq *conditions.shift
       conditions.each_pair do |key, value|
         params[:filter] &= Net::LDAP::Filter.eq(key, value)
       end
     end
-    ldap.search *params
+    
+    ldap.search(params) || []
   end
   
   def self.first *params
