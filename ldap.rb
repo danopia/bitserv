@@ -7,7 +7,7 @@ module LDAP
   end
   
   def self.base
-    @config['ldap']['base']
+    @config['base']
   end
 
   def self.ldap
