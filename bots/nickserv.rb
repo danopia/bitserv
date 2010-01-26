@@ -35,6 +35,9 @@ module BitServ
     
     def cmd_identify origin, password
       if LDAP.user_bind origin.nick, password
+        origin.dn = LDAP.user_dn(origin.nick) + ',' + LDAP.base
+        origin.entry = LDAP.ldap.search(:base => origin.dn, :filter => Net::LDAP::Filter.eq('objectclass', 'x-bit-ircUser')).first
+        
         #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
         notice origin, "You are now identified for ^B#{origin.nick}^B."
         #sock.puts ":NickServ B danopia :2 failed logins since last login."
