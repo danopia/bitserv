@@ -13,10 +13,8 @@ module BitServ
     
     def check_nick_reg client
       client.dn = LDAP.user_dn client.nick
-      
-      client.entry = LDAP.search client.dn
+      client.entry = LDAP.first client.dn
       if client.entry
-        client.entry = client.entry.first
         notice client, "This nickname is registered. Please choose a different nickname, or identify via ^B/msg #{@nick} identify <password>^B."
       end
     end
@@ -34,10 +32,12 @@ module BitServ
     command 'info', 'Displays information on registrations.', 0, 'account'
     
     def cmd_identify origin, password
-      if LDAP.user_bind origin.nick, password
-        origin.dn = LDAP.user_dn origin.nick
-        origin.entry = LDAP.search(origin.dn, {:objectclass => 'x-bit-ircUser'}).first
-        
+      LDAP.user_bind origin.nick, password
+      
+      origin.dn = LDAP.user_dn origin.nick
+      origin.entry = LDAP.first origin.dn, {:objectclass => 'x-bit-ircUser'}
+      
+      if LDAP.success?
         #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
         notice origin, "You are now identified for ^B#{origin.nick}^B."
         #sock.puts ":NickServ B danopia :2 failed logins since last login."
@@ -48,17 +48,15 @@ module BitServ
         @services.uplink.set_cloak self, origin if origin.cloak
       else
         notice origin, "Invalid password for ^B#{origin.nick}^B."
+        origin.dn = origin.entry = nil
       end
     end
     
     def cmd_info origin, account=nil
       account ||= origin.nick
+      entry = LDAP.first LDAP.user_dn(account), {:objectclass => 'x-bit-ircUser'}
       
-      dn = LDAP.user_dn account
-      entries = LDAP.search dn, {:objectclass => 'x-bit-ircUser'}
-      
-      if entries
-        entry = entries.shift
+      if entry
         notice origin, "Information on ^B#{entry[:uid].first}^B (account #{account}):"
         notice origin, "Cloak      : #{create_cloak entry}"
         notice origin, "Name       : #{entry[:cn].first}"
@@ -78,7 +76,6 @@ module BitServ
     end
     
     def cmd_register origin, password, email
-      dn = LDAP.user_dn origin.nick
       attrs = {
         :cn => origin.nick,
         :userPassword => `slappasswd -s #{password}`.chomp,
@@ -88,7 +85,7 @@ module BitServ
       }
       
       LDAP.bot_bind self
-      LDAP.ldap.add :dn => dn, :attributes => attrs
+      LDAP.ldap.add :dn => LDAP.user_dn(origin.nick), :attributes => attrs
       if LDAP.success?
         log 'register', "^B#{origin.nick}^B to ^B#{attrs[:mail]}^B"
         #@link.send_from self.nick, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
@@ -105,22 +102,18 @@ module BitServ
     end
     
     def cmd_drop origin, nickname, password
-      if !LDAP.user_bind nickname, password
-        notice origin, "Invalid password for ^B#{nickname}^B."
-        return
-      end
-      
-      dn = LDAP.user_dn nickname
-      LDAP.ldap.delete :dn => dn
+      LDAP.user_bind nickname, password
+      LDAP.ldap.delete :dn => LDAP.user_dn(nickname)
       
       if LDAP.success?
         log 'drop', "^B#{nickname}^B by ^B#{origin}^B"
         @services.uplink.send_from self.nick, 'SVS2MODE', nickname, '-r+d', 0 # TODO: Use link abstraction!
         notice origin, "^B#{nickname}^B has been dropped."
       else
-        notice origin, "An error occurred while dropping your account."
-        puts "Result: #{LDAP.ldap.get_operation_result.code}"
-        puts "Message: #{LDAP.ldap.get_operation_result.message}"
+        notice origin, "Invalid password for ^B#{nickname}^B. #{LDAP.ldap.get_operation_result.code} #{LDAP.ldap.get_operation_result.message}"
+        #notice origin, "An error occurred while dropping your account."
+        #puts "Result: #{LDAP.ldap.get_operation_result.code}"
+        #puts "Message: #{LDAP.ldap.get_operation_result.message}"
       end
     end
 
