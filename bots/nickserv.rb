@@ -12,7 +12,7 @@ module BitServ
     end
     
     def check_nick_reg client
-      client.dn = @services.config['ldap']['auth_pattern'].gsub('{username}', client.nick) + ",#{@services.config['ldap']['base']}"
+      client.dn = LDAP.user_dn(client.nick) + ',' + LDAP.base
       
       client.entry = LDAP.ldap.search :base => client.dn
       if client.entry
@@ -51,7 +51,7 @@ module BitServ
     def cmd_info origin, account=nil
       account ||= origin.nick
       
-      dn = @services.config['ldap']['auth_pattern'].gsub('{username}', account) + ",#{@services.config['ldap']['base']}"
+      dn = LDAP.user_dn(account) + ',' + LDAP.base
       entries = LDAP.ldap.search :base => dn, :filter => Net::LDAP::Filter.eq('objectclass', 'x-bit-ircUser')
       
       if entries
@@ -75,7 +75,7 @@ module BitServ
     end
     
     def cmd_register origin, password, email
-      dn = @services.config['ldap']['auth_pattern'].gsub('{username}', origin.nick) + ",#{@services.config['ldap']['base']}"
+      dn = LDAP.user_dn(origin.nick) + ',' + LDAP.base
       attrs = {
         :cn => origin.nick,
         :userPassword => `slappasswd -s #{password}`.chomp,
@@ -107,7 +107,7 @@ module BitServ
         return
       end
       
-      dn = @services.config['ldap']['auth_pattern'].gsub('{username}', nickname) + ",#{@services.config['ldap']['base']}"
+      dn = LDAP.user_dn(nickname) + ',' + LDAP.base
       LDAP.ldap.delete :dn => dn
       
       if LDAP.success?

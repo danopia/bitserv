@@ -1,7 +1,7 @@
 require 'services'
 
 services = BitServ::Services.new 'bitserv.yaml'
-$services = services
+LDAP.config = services.config['ldap']
 
 trap "INT" do
   services.shutdown "Caught interupt"

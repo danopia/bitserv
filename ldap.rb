@@ -2,8 +2,12 @@ require 'rubygems'
 require 'net/ldap'
 
 module LDAP
+  def self.config= conf
+    @config = conf
+  end
+  
   def self.base
-    $services.config['ldap']['base']
+    @config['ldap']['base']
   end
 
   def self.ldap
@@ -12,8 +16,8 @@ module LDAP
   
   def self.create_ldap
     ldap = Net::LDAP.new
-    ldap.host = $services.config['ldap']['hostname'] || 'localhost'
-    ldap.port = ($services.config['ldap']['port'] || 389).to_i
+    ldap.host = @config['hostname'] || 'localhost'
+    ldap.port = (@config['port'] || 389).to_i
     ldap
   end
   
@@ -35,16 +39,23 @@ module LDAP
     ldap.bind
   end
   def self.user_auth username, password
-    bind $services.config['ldap']['auth_pattern'].gsub('{username}', username), password
+    bind user_dn(username), password
+  end
+  
+  def self.user_dn account
+    @config['auth_pattern'].gsub('{username}', account)
+  end
+  def self.bot_dn account
+    @config['master_dn_pattern'].gsub('{username}', account)
   end
   
   def self.bot_bind name
-    name = name.class.name.to_s.split('::').last if name.is_a? BitServ::ServicesBot
+    name = name.nick if name.is_a? BitServ::ServicesBot
     name = name.downcase
     
-    profile = $services.config['ldap']['binds'].find {|profile| profile['bot'].downcase == name }
+    profile = @config['binds'].find {|profile| profile['bot'].downcase == name }
     
     username = profile['username'] || profile['bot']
-    bind $services.config['ldap']['master_dn_pattern'].gsub('{username}', username), profile['password']
+    bind bot_dn(username), profile['password']
   end
 end
