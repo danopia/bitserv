@@ -12,7 +12,7 @@ module BitServ
     end
     
     def check_nick_reg client
-      client.dn = LDAP.user_dn client.nick, true
+      client.dn = LDAP.user_dn client.nick
       
       client.entry = LDAP.ldap.search :base => client.dn
       if client.entry
@@ -35,7 +35,7 @@ module BitServ
     
     def cmd_identify origin, password
       if LDAP.user_bind origin.nick, password
-        origin.dn = LDAP.user_dn origin.nick, true
+        origin.dn = LDAP.user_dn origin.nick
         origin.entry = LDAP.ldap.search(:base => origin.dn, :filter => Net::LDAP::Filter.eq('objectclass', 'x-bit-ircUser')).first
         
         #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
@@ -54,7 +54,7 @@ module BitServ
     def cmd_info origin, account=nil
       account ||= origin.nick
       
-      dn = LDAP.user_dn account, true
+      dn = LDAP.user_dn account
       entries = LDAP.ldap.search :base => dn, :filter => Net::LDAP::Filter.eq('objectclass', 'x-bit-ircUser')
       
       if entries
@@ -78,7 +78,7 @@ module BitServ
     end
     
     def cmd_register origin, password, email
-      dn = LDAP.user_dn origin.nick, true
+      dn = LDAP.user_dn origin.nick
       attrs = {
         :cn => origin.nick,
         :userPassword => `slappasswd -s #{password}`.chomp,
@@ -110,7 +110,7 @@ module BitServ
         return
       end
       
-      dn = LDAP.user_dn nickname, true
+      dn = LDAP.user_dn nickname
       LDAP.ldap.delete :dn => dn
       
       if LDAP.success?
