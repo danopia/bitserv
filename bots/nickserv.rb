@@ -14,7 +14,7 @@ module BitServ
     def check_nick_reg client
       client.dn = LDAP.user_dn client.nick
       
-      client.entry = LDAP.ldap.search :base => client.dn
+      client.entry = LDAP.search client.dn
       if client.entry
         client.entry = client.entry.first
         notice client, "This nickname is registered. Please choose a different nickname, or identify via ^B/msg #{@nick} identify <password>^B."
@@ -22,7 +22,7 @@ module BitServ
     end
     
     def create_cloak account
-      entries = LDAP.ldap.search :base => account[:dn].first, :filter => Net::LDAP::Filter.eq('objectclass', 'x-bit-ircGroupRole')
+      entries = LDAP.search account[:dn].first, {:objectclass => 'x-bit-ircGroupRole'}
       return nil if entries.nil? || entries.empty?
       entry = entries.first
       "#{account[:uid].first}/#{entry[:ou].first}/#{entry[:cn].first}"
@@ -36,7 +36,7 @@ module BitServ
     def cmd_identify origin, password
       if LDAP.user_bind origin.nick, password
         origin.dn = LDAP.user_dn origin.nick
-        origin.entry = LDAP.ldap.search(:base => origin.dn, :filter => Net::LDAP::Filter.eq('objectclass', 'x-bit-ircUser')).first
+        origin.entry = LDAP.search(origin.dn, {:objectclass => 'x-bit-ircUser'}).first
         
         #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
         notice origin, "You are now identified for ^B#{origin.nick}^B."
@@ -55,7 +55,7 @@ module BitServ
       account ||= origin.nick
       
       dn = LDAP.user_dn account
-      entries = LDAP.ldap.search :base => dn, :filter => Net::LDAP::Filter.eq('objectclass', 'x-bit-ircUser')
+      entries = LDAP.search dn, {:objectclass => 'x-bit-ircUser'}
       
       if entries
         entry = entries.shift
@@ -66,7 +66,7 @@ module BitServ
         notice origin, "URL        : #{entry[:"x-bit-url"].first}"
         
         first = "Groups"
-        LDAP.ldap.search(:base => entry[:dn].first, :filter => Net::LDAP::Filter.eq('objectclass', 'x-bit-ircGroupRole')).each do |group|
+        LDAP.search(entry[:dn].first, {:objectclass => 'x-bit-ircGroupRole'}).each do |group|
           notice origin, "#{first}     : #{group[:ou].first} (#{group[:cn].first})"
           first = "      "
         end
