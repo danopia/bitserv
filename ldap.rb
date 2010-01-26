@@ -30,14 +30,14 @@ module LDAP
   end
   
   def self.search base, conditions=nil
-    params = {:base => "#{base},#{self.base}"}
+    params = {:base => base}
     if conditions
       conditions.each_pair do |key, value|
         filter = Net::LDAP::Filter.eq(key, value)
         params[:filter] = params[:filter] ? (params[:filter] & filter) : filter
       end
     end
-    LDAP.ldap.search *params
+    ldap.search *params
   end
   
   ################
