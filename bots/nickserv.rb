@@ -63,7 +63,7 @@ module BitServ
         notice origin, "URL        : #{entry[:"x-bit-url"].first}"
         
         first = "Groups"
-        entries.each do |group|
+        LDAP.ldap.search(:base => entry[:dn].first, :filter => Net::LDAP::Filter.eq('objectclass', 'x-bit-ircGroupRole')).each do |group|
           notice origin, "#{first}     : #{group[:ou].first} (#{group[:cn].first})"
           first = "      "
         end
