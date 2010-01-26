@@ -46,6 +46,14 @@ module LDAP
     entries.first
   end
   
+  def self.delete dn
+    ldap.delete :dn => dn
+  end
+  
+  def self.create dn, attrs
+    ldap.add :dn => dn, :attributes => attrs
+  end
+  
   ################
   ## Bind stuff ##
   ################

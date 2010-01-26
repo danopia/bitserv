@@ -82,12 +82,12 @@ module BitServ
       }
       
       LDAP.bot_bind self
-      LDAP.ldap.add :dn => LDAP.user_dn(origin.nick), :attributes => attrs
+      LDAP.create origin.dn, attrs
       if LDAP.success?
         log 'register', "^B#{origin.nick}^B to ^B#{attrs[:mail]}^B"
         #@link.send_from self.nick, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
         
-        origin.cloak = "#{origin.nick}::EighthBit::User"
+        #origin.cloak = "#{origin.nick}::EighthBit::User"
         @services.uplink.set_cloak self, origin
         
         notice origin, "^B#{origin.nick}^B is now registered to ^B#{email}^B, with the password ^B#{password}^B."
@@ -100,11 +100,11 @@ module BitServ
     
     def cmd_drop origin, nickname, password
       LDAP.user_bind nickname, password
-      LDAP.ldap.delete :dn => LDAP.user_dn(nickname)
+      LDAP.delete LDAP.user_dn(nickname)
       
       if LDAP.success?
         log 'drop', "^B#{nickname}^B by ^B#{origin}^B"
-        @services.uplink.send_from self.nick, 'SVS2MODE', nickname, '-r+d', 0 # TODO: Use link abstraction!
+        #@services.uplink.send_from self.nick, 'SVS2MODE', nickname, '-r+d', 0 # TODO: Use link abstraction!
         notice origin, "^B#{nickname}^B has been dropped."
       else
         notice origin, "Invalid password for ^B#{nickname}^B. #{LDAP.ldap.get_operation_result.code} #{LDAP.ldap.get_operation_result.message}"
