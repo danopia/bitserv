@@ -57,11 +57,11 @@ module LDAP
     bind user_dn(username), password
   end
   
-  def self.user_dn account
-    @config['auth_pattern'].gsub('{username}', account)
+  def self.user_dn account, base=false
+    @config['auth_pattern'].gsub('{username}', account) + (base ? ",#{base}" : '')
   end
-  def self.bot_dn account
-    @config['master_dn_pattern'].gsub('{username}', account)
+  def self.bot_dn account, base=false
+    @config['master_dn_pattern'].gsub('{username}', account) + (base ? ",#{base}" : '')
   end
   
   def self.bot_bind name
