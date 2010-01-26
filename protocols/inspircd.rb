@@ -184,33 +184,31 @@ class InspIRCd < LineConnection
       
       when 'SMO'
         puts "Server message to #{args[0]}: #{args[1]}"
+        
+      when 'NICK'
+        old_nick = origin.nick
+        origin.nick = args.shift
+        origin.timestamp = Time.at(args.shift.to_i)
+        emit :nick_change, old_nick, origin
       
       when 'UID'
-        if origin.is_a? User
-          old_nick = origin.nick
-          origin.nick = args.shift
-          origin.timestamp = Time.at(args.shift.to_i)
-          
-          emit :nick_change, old_nick, origin
-        else
-          user = BitServ::User.new args[2]
-          user.server = origin
-          
-          user.uid = args.shift
-          args.shift # connection time. # user.timestamp = Time.at(args.shift.to_i)
-          args.shift # nick
-          user.hostname = args.shift
-          user.cloak = args.shift
-          user.ident = args.shift
-          user.ip = args.shift
-          user.timestamp = Time.at(args.shift.to_i)
-          user.modes = args.shift
-          user.realname = args.shift
-          
-          @users[user.uid] = user
-          
-          emit :new_client, user
-        end
+        user = BitServ::User.new args[2]
+        user.server = origin
+        
+        user.uid = args.shift
+        args.shift # connection time. # user.timestamp = Time.at(args.shift.to_i)
+        args.shift # nick
+        user.hostname = args.shift
+        user.cloak = args.shift
+        user.ident = args.shift
+        user.ip = args.shift
+        user.timestamp = Time.at(args.shift.to_i)
+        user.modes = args.shift
+        user.realname = args.shift
+        
+        @users[user.uid] = user
+        
+        emit :new_client, user
         
       when 'QUIT' # quit: message
         emit :client_quit, origin, args.shift
