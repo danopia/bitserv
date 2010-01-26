@@ -45,24 +45,23 @@ module LDAP
   ################
   
   def self.bind node=nil, pass=nil
-    ldap.auth "#{node},#{base}", pass
+    ldap.auth node, pass
+  end
+  
+  def self.check_bind
+    ldap.bind
+  end
+  
+  def self.user_dn account
+    @config['auth_pattern'].gsub('{username}', account) + ",#{base}"
+  end
+  def self.bot_dn account
+    @config['master_dn_pattern'].gsub('{username}', account) + ",#{base}"
   end
   
   def self.user_bind username, password
-    user_auth username, password
-    ldap.bind
-  end
-  def self.user_auth username, password
     bind user_dn(username), password
   end
-  
-  def self.user_dn account, base=false
-    @config['auth_pattern'].gsub('{username}', account) + (base ? ",#{base}" : '')
-  end
-  def self.bot_dn account, base=false
-    @config['master_dn_pattern'].gsub('{username}', account) + (base ? ",#{base}" : '')
-  end
-  
   def self.bot_bind name
     name = name.nick if name.is_a? BitServ::ServicesBot
     name = name.downcase
