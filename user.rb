@@ -1,6 +1,6 @@
 module BitServ
   class User
-    attr_accessor :nick, :numeric, :timestamp, :ident, :ip, :server, :hops, :modes, :cloak, :base64, :realname, :account, :dn, :entry, :uid, :hostname
+    attr_accessor :nick, :numeric, :timestamp, :ident, :ip, :server, :hops, :modes, :cloak, :base64, :realname, :account, :entry, :uid, :hostname
     
     def initialize(nick)
       puts "Remote client connected: #{nick}"
@@ -14,6 +14,10 @@ module BitServ
     
     def quit message
       puts "#{@nick} quit: #{message}"
+    end
+    
+    def dn
+      LDAP.user_dn @nick
     end
   end
 end

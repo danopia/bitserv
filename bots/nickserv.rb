@@ -12,9 +12,8 @@ module BitServ
     end
     
     def check_nick_reg client
-      client.dn = LDAP.user_dn client.nick
-      client.entry = LDAP.first client.dn
-      if client.entry
+      LDAP.bot_bind self
+      if client.entry = LDAP.first(client.dn)
         notice client, "This nickname is registered. Please choose a different nickname, or identify via ^B/msg #{@nick} identify <password>^B."
       end
     end
@@ -33,8 +32,6 @@ module BitServ
     
     def cmd_identify origin, password
       LDAP.user_bind origin.nick, password
-      
-      origin.dn = LDAP.user_dn origin.nick
       origin.entry = LDAP.first origin.dn, {:objectclass => 'x-bit-ircUser'}
       
       if LDAP.success?
@@ -48,7 +45,7 @@ module BitServ
         @services.uplink.set_cloak self, origin if origin.cloak
       else
         notice origin, "Invalid password for ^B#{origin.nick}^B."
-        origin.dn = origin.entry = nil
+        # hopefully it returns nil on error
       end
     end
     
