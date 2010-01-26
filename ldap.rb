@@ -32,9 +32,9 @@ module LDAP
   def self.search base, conditions=nil
     params = {:base => base}
     if conditions
+      params[:filter] = Net::LDAP::Filter.eq *conditions.shift
       conditions.each_pair do |key, value|
-        filter = Net::LDAP::Filter.eq(key, value)
-        params[:filter] = params[:filter] ? (params[:filter] & filter) : filter
+        params[:filter] &= Net::LDAP::Filter.eq(key, value)
       end
     end
     ldap.search *params
