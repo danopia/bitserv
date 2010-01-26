@@ -21,8 +21,23 @@ module LDAP
     ldap
   end
   
+  #####################
+  ## Prettifyng defs ##
+  #####################
+  
   def self.success?
     ldap.get_operation_result.code == 0
+  end
+  
+  def self.search base, conditions=nil
+    params = {:base => "#{base},#{self.base}"}
+    if conditions
+      conditions.each_pair do |key, value|
+        filter = Net::LDAP::Filter.eq(key, value)
+        params[:filter] = params[:filter] ? (params[:filter] & filter) : filter
+      end
+    end
+    LDAP.ldap.search *params
   end
   
   ################
