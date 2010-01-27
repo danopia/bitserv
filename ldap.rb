@@ -61,6 +61,11 @@ module LDAP
     entries.first
   end
   
+  def self.select dn, params={}
+    params[:scope] = Net::LDAP::SearchScope_BaseObject
+    first dn, nil, params
+  end
+  
   def self.delete dn
     ldap.delete :dn => dn
   end

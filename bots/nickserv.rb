@@ -13,7 +13,7 @@ module BitServ
     
     def check_nick_reg client
       LDAP.bot_bind self
-      if client.entry = LDAP.first(client.dn, {:objectclass => 'x-bit-ircUser'}, :attributes => ['*', 'memberof'])
+      if client.entry = LDAP.select(client.dn, :attributes => ['*', 'memberof'])
         notice client, "This nickname is registered. Please choose a different nickname, or identify via ^B/msg #{@nick} identify <password>^B."
       end
     end
@@ -30,9 +30,9 @@ module BitServ
     
     def cmd_identify origin, password
       LDAP.user_bind origin.nick, password
-      origin.entry = LDAP.first origin.dn, {:objectclass => 'x-bit-ircUser'}, :attributes => ['*', 'memberof']
+      origin.entry = LDAP.select origin.dn, :attributes => ['*', 'memberof']
       
-      if LDAP.success?
+      if origin.entry # LDAP.success?
         #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
         notice origin, "You are now identified for ^B#{origin.nick}^B."
         #sock.puts ":NickServ B danopia :2 failed logins since last login."
@@ -49,7 +49,7 @@ module BitServ
     
     def cmd_info origin, account=nil
       account ||= origin.nick
-      entry = LDAP.first LDAP.user_dn(account), {:objectclass => 'x-bit-ircUser'}, :attributes => ['*', 'memberof']
+      entry = LDAP.select LDAP.user_dn(account), :attributes => ['*', 'memberof']
       
       if entry
         notice origin, "Information on ^B#{entry.uid}^B (account #{account}):"
