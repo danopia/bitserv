@@ -44,7 +44,7 @@ module BitServ
     def cmd_info origin, account=nil
       account ||= origin.nick
       
-      if entry = Account.from(account)
+      if entry = Account.load(account)
         notice origin, "Information on ^B#{entry.entry.uid}^B (account #{account}):"
         notice origin, "Cloak      : #{entry.cloak}"
         notice origin, "Name       : #{entry.entry.cn}"
