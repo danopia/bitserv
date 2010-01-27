@@ -12,7 +12,7 @@ bot = IRC.new do
   end
 
   server :testnet do
-    address 'danopia.no-ip.org'
+    address 'danopia'
   end
 end
 
@@ -22,7 +22,7 @@ bot[:eighthbit].on '001' do
 end
 
 bot[:testnet].on '001' do
-  join '#bits'
+  join '#illusion'
 end
 
 def deping nick
@@ -30,11 +30,11 @@ def deping nick
 end
 
 bot[:eighthbit].on :privmsg do
-  bot[:testnet].send_cmd(:privmsg, '#bits', "<#{deping sender.nick}> #{params[1]}") if params[0] == '#illusion'
+  bot[:testnet].send_cmd(:privmsg, '#illusion', "<#{deping sender.nick}> #{params[1]}") if params[0] == '#illusion'
 end
 
 bot[:testnet].on :privmsg do
-  bot[:eighthbit].send_cmd(:privmsg, '#illusion', "<#{deping sender.nick}> #{params[1]}") if params[0] == '#bits'
+  bot[:eighthbit].send_cmd(:privmsg, '#illusion', "<#{deping sender.nick}> #{params[1]}") if params[0] == '#illusion'
 end
 
 bot.on :ping do
