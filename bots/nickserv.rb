@@ -13,14 +13,9 @@ module BitServ
     
     def check_nick_reg client
       LDAP.bot_bind self
-      if client.entry = LDAP.select(client.dn, :attributes => ['*', 'memberof'])
+      if Account.exists? client.nick
         notice client, "This nickname is registered. Please choose a different nickname, or identify via ^B/msg #{@nick} identify <password>^B."
       end
-    end
-    
-    def create_cloak account
-      account.memberof.last =~ /^ou=([^,]+),ou=([^,]+),/
-      "#{account.uid}/#{$2}/#{$1}"
     end
     
     command ['identify', 'id'], 'Identifies to services for a nickname.', 'password'
@@ -30,16 +25,15 @@ module BitServ
     
     def cmd_identify origin, password
       LDAP.user_bind origin.nick, password
-      origin.entry = LDAP.select origin.dn, :attributes => ['*', 'memberof']
       
-      if origin.entry # LDAP.success?
+      if origin.account = Account.load(origin.nick)
         #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
-        notice origin, "You are now identified for ^B#{origin.nick}^B."
+        notice origin, "You are now identified for ^B#{origin.account.entry.uid}^B."
         #sock.puts ":NickServ B danopia :2 failed logins since last login."
         #sock.puts ":NickServ B danopia :Last failed attempt from: danopia!danopia@danopia-F985FA2D on Jan 01 00:25:26 2010."
         #@link.send_from self, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
         
-        origin.cloak = create_cloak origin.entry
+        origin.cloak = origin.account.cloak
         @services.uplink.set_cloak self, origin if origin.cloak
       else
         notice origin, "Invalid password for ^B#{origin.nick}^B."
@@ -49,18 +43,16 @@ module BitServ
     
     def cmd_info origin, account=nil
       account ||= origin.nick
-      entry = LDAP.select LDAP.user_dn(account), :attributes => ['*', 'memberof']
       
-      if entry
-        notice origin, "Information on ^B#{entry.uid}^B (account #{account}):"
-        notice origin, "Cloak      : #{create_cloak entry}"
-        notice origin, "Name       : #{entry.cn}"
-        notice origin, "Email      : #{entry.mail}"
-        notice origin, "URL        : #{entry[:"x-bit-url"]}"
+      if entry = Account.from(account)
+        notice origin, "Information on ^B#{entry.entry.uid}^B (account #{account}):"
+        notice origin, "Cloak      : #{entry.cloak}"
+        notice origin, "Name       : #{entry.entry.cn}"
+        notice origin, "Email      : #{entry.entry.mail}"
+        notice origin, "URL        : #{entry.entry[:"x-bit-url"]}"
         
         first = "Groups"
-        entry.memberof.each do |group|
-          next unless group.count(',') > 4
+        entry.entry.memberof.each do |group|
           group =~ /^ou=([^,]+),ou=([^,]+),/
           notice origin, "#{first}     : #{$2} (#{$1})"
           first = "      "
