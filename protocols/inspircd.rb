@@ -14,7 +14,7 @@ class InspIRCd < LineConnection
     @services = services
     @config = config
     
-    @me = @config['numeric'] || '00B'
+    @me = @config['numeric'] || '00A'
     @uplink = nil
     @servers = {}
     @servers[@me] = services.config['hostname']
