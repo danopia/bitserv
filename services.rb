@@ -1,5 +1,6 @@
 require 'yaml'
 
+require 'account'
 require 'user'
 require 'channel'
 require 'bot'
