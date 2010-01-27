@@ -2,7 +2,11 @@ uplink:
   hostname: localhost
   port: 7776
   
-  protocol: unrealircd
+  protocol: inspircd
+  numeric: 00A
+  #opertype: Services
+  
+  #protocol: unrealircd
   
   password: PASSWORD HERE
 

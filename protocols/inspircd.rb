@@ -14,7 +14,7 @@ class InspIRCd < LineConnection
     @services = services
     @config = config
     
-    @me = '00B' # TODO: user a config
+    @me = @config['numeric'] || '00B'
     @uplink = nil
     @servers = {}
     @servers[@me] = services.config['hostname']
@@ -92,7 +92,7 @@ class InspIRCd < LineConnection
     realname ||= "Your friendly neighborhood #{nick}"
     
     send_from_me 'uid', uid, ts, nick, @servers[@me], @servers[@me], ident, '0.0.0.0', ts, "+#{umodes}", realname
-    send_from uid, 'opertype', 'Services'
+    send_from uid, 'opertype', @config['opertype'] || 'Services'
   end
   
   def introduce_bot bot
