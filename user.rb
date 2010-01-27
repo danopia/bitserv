@@ -19,5 +19,13 @@ module BitServ
     def dn
       LDAP.user_dn @nick
     end
+    
+    def to_s
+      @nick
+    end
+    
+    def inspect
+      "#{@nick}!#{@ident}@#{@cloak}"
+    end
   end
 end
