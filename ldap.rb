@@ -66,6 +66,13 @@ module LDAP
     first dn, nil, params
   end
   
+  def self.exists? dn, params={}
+    params[:scope] = Net::LDAP::SearchScope_BaseObject
+    params[:return_result] = false
+    search dn, nil, params
+    success?
+  end
+  
   def self.delete dn
     ldap.delete :dn => dn
   end

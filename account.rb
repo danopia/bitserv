@@ -1,3 +1,5 @@
+require 'ldap'
+
 module BitServ
 class Account
   attr_accessor :entry
@@ -16,6 +18,10 @@ class Account
   def self.load account
     entry = LDAP.select LDAP.user_dn(account), :attributes => ['*', 'memberof']
     entry && self.new(entry)
+  end
+  
+  def self.exists? account
+    LDAP.exists? LDAP.user_dn(account)
   end
   
   def initialize entry
