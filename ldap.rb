@@ -1,6 +1,19 @@
 require 'rubygems'
 require 'net/ldap'
 
+class Net::LDAP::Entry
+  def inspect
+    "#{dn}: " + @myhash.map {|(key,value)|
+      next if key == :dn
+      "#{key}: #{(value.size == 1 ? value.first : value).inspect}"
+    }.compact.join(', ')
+  end
+  
+  def pretty_print q
+    @myhash.pretty_print q
+  end
+end
+
 module LDAP
   def self.config= conf
     @config = conf
@@ -44,7 +57,7 @@ module LDAP
   
   def self.first *params
     entries = search *params
-    return nil if entries.nil? || entries.empty?
+    return nil if entries.empty?
     entries.first
   end
   
