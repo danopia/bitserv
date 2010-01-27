@@ -13,16 +13,14 @@ module BitServ
     
     def check_nick_reg client
       LDAP.bot_bind self
-      if client.entry = LDAP.first(client.dn)
+      if client.entry = LDAP.first(client.dn, {:objectclass => 'x-bit-ircUser'}, :attributes => ['*', 'memberof'])
         notice client, "This nickname is registered. Please choose a different nickname, or identify via ^B/msg #{@nick} identify <password>^B."
       end
     end
     
     def create_cloak account
-      entries = LDAP.search account[:dn].first, {:objectclass => 'x-bit-ircGroupRole'}
-      return nil if entries.nil? || entries.empty?
-      entry = entries.first
-      "#{account[:uid].first}/#{entry[:ou].first}/#{entry[:cn].first}"
+      account.memberof.last =~ /^ou=([^,]+),ou=([^,]+),/
+      "#{account.uid}/#{$2}/#{$1}"
     end
     
     command ['identify', 'id'], 'Identifies to services for a nickname.', 'password'
@@ -32,7 +30,7 @@ module BitServ
     
     def cmd_identify origin, password
       LDAP.user_bind origin.nick, password
-      origin.entry = LDAP.first origin.dn, {:objectclass => 'x-bit-ircUser'}
+      origin.entry = LDAP.first origin.dn, {:objectclass => 'x-bit-ircUser'}, :attributes => ['*', 'memberof']
       
       if LDAP.success?
         #sock.puts ":OperServ ! #services :SOPER: #{origin} as #{origin}"
@@ -51,18 +49,20 @@ module BitServ
     
     def cmd_info origin, account=nil
       account ||= origin.nick
-      entry = LDAP.first LDAP.user_dn(account), {:objectclass => 'x-bit-ircUser'}
+      entry = LDAP.first LDAP.user_dn(account), {:objectclass => 'x-bit-ircUser'}, :attributes => ['*', 'memberof']
       
       if entry
-        notice origin, "Information on ^B#{entry[:uid].first}^B (account #{account}):"
+        notice origin, "Information on ^B#{entry.uid}^B (account #{account}):"
         notice origin, "Cloak      : #{create_cloak entry}"
-        notice origin, "Name       : #{entry[:cn].first}"
-        notice origin, "Email      : #{entry[:mail].first}"
-        notice origin, "URL        : #{entry[:"x-bit-url"].first}"
+        notice origin, "Name       : #{entry.cn}"
+        notice origin, "Email      : #{entry.mail}"
+        notice origin, "URL        : #{entry[:"x-bit-url"]}"
         
         first = "Groups"
-        LDAP.search(entry[:dn].first, {:objectclass => 'x-bit-ircGroupRole'}).each do |group|
-          notice origin, "#{first}     : #{group[:ou].first} (#{group[:cn].first})"
+        entry.memberof.each do |group|
+          next unless group.count(',') > 4
+          group =~ /^ou=([^,]+),ou=([^,]+),/
+          notice origin, "#{first}     : #{$2} (#{$1})"
           first = "      "
         end
         
@@ -82,13 +82,13 @@ module BitServ
       }
       
       LDAP.bot_bind self
-      LDAP.create origin.dn, attrs
+      p LDAP.create(origin.dn, attrs) # Does this return the entry?
       if LDAP.success?
         log 'register', "^B#{origin.nick}^B to ^B#{attrs[:mail]}^B"
         #@link.send_from self.nick, 'SVS2MODE', origin, '+rd', Time.now.to_i # TODO: Use link abstraction!
         
         #origin.cloak = "#{origin.nick}::EighthBit::User"
-        @services.uplink.set_cloak self, origin
+        #@services.uplink.set_cloak self, origin
         
         notice origin, "^B#{origin.nick}^B is now registered to ^B#{email}^B, with the password ^B#{password}^B."
       else
