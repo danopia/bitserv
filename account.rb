@@ -38,7 +38,7 @@ class Account
   end
   
   def groups
-    @entry['memberof'] || []
+    (@entry['memberof'] || []).select{|x| x.count(',') > 4 }
   end
 end
 end
