@@ -54,7 +54,7 @@ module BitServ
       if command == 'help'
         cmd_help from, params # exception here because of the unlimited args
         
-      elsif respond_to?("cmd_#{command}") && @@commands[self.class].has_key?(command.upcase)
+      elsif @@commands[self.class].has_key?(command.upcase) && respond_to?("cmd_#{@@commands[self.class][command.upcase][:alias_of].downcase || command}")
         info = @@commands[self.class][command.upcase]
         if params.size < info[:min_params]
           notice from, "Insufficient parameters for ^B#{command}^B."
