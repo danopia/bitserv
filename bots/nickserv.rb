@@ -52,7 +52,7 @@ module BitServ
         notice origin, "URL        : #{entry.entry[:"x-bit-url"]}"
         
         first = "Groups"
-        entry.entry.memberof.each do |group|
+        entry.groups.each do |group|
           group =~ /^ou=([^,]+),ou=([^,]+),/
           notice origin, "#{first}     : #{$2} (#{$1})"
           first = "      "

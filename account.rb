@@ -33,8 +33,12 @@ class Account
   end
 
   def cloak
-    @entry.memberof.find{|x| x.count(',') > 4 } =~ /^ou=([^,]+),ou=([^,]+),/
+    groups.find{|x| x.count(',') > 4 } =~ /^ou=([^,]+),ou=([^,]+),/
     $1 && "#{@entry.uid}/#{$2}/#{$1}"
+  end
+  
+  def groups
+    @entry['memberof'] || []
   end
 end
 end
