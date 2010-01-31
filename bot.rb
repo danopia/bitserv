@@ -61,7 +61,7 @@ module BitServ
           notice from, "Syntax: #{command} <#{info[:params].join '> <'}>"
         else
           params.pop until params.size <= info[:params].size
-          send "cmd_#{command}", from, *params
+          send "cmd_#{(@@commands[self.class][command.upcase][:alias_of] || command).downcase}", from, *params
         end
         
       else
