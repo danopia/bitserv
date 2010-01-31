@@ -15,6 +15,8 @@ module BitServ
         :min_params => min_params
       }
       
+      data[:unlimited] = params.pop if params.last == true
+      
       names = [names] if names.is_a? String
       @@commands[self][names.first.upcase] = data
       
@@ -60,7 +62,7 @@ module BitServ
           notice from, "Insufficient parameters for ^B#{command}^B."
           notice from, "Syntax: #{command} <#{info[:params].join '> <'}>"
         else
-          params.pop until params.size <= info[:params].size
+          params.pop until params.size <= info[:params].size unless info[:unlimited]
           send "cmd_#{(@@commands[self.class][command.upcase][:alias_of] || command).downcase}", from, *params
         end
         
