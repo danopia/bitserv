@@ -13,10 +13,8 @@ module BitServ
     
     def cmd_roles origin, group
       notice origin, "*** Group Roles List for #{group} ***"
-      notice origin, "Role            | (Members) Description"
-      notice origin, "----------------+--------------------------"
-      LDAP.search("ou=#{group},ou=groups,ou=irc,#{LDAP.base}", {:objectclass => 'x-bit-ircGroup'}, :scope => Net::LDAP::SearchScope_SingleLevel).each do |role|
-        notice origin, "#{role.ou.first.ljust 16}| (#{role.member.size}) #{role.description}"
+      Group.load(group).roles.each do |role|
+        notice origin, "#{role.name.ljust 16}| (#{role.members.size}) #{role.desc}"
       end
       notice origin, "*** End Role List ***"
     end
