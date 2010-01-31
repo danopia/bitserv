@@ -93,6 +93,11 @@ class Role
     @entry = LDAP.select @entry.dn
   end
   
+  def delete!
+    LDAP.delete @entry.dn.first
+    LDAP.success?
+  end
+  
   def members
     @entry['member'] || []
   end
