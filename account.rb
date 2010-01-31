@@ -34,7 +34,7 @@ class Account
 
   def cloak
     groups.find{|x| x.count(',') > 4 } =~ /^ou=([^,]+),ou=([^,]+),/
-    $1 && "#{@entry.uid}/#{$2}/#{$1}"
+    $1 && "#{$2}/#{$1}/#{@entry.uid}"
   end
   
   def groups
