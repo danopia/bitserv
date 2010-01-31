@@ -7,6 +7,7 @@ module BitServ
       load 'bot.rb'
       load 'channel.rb'
       load 'connection.rb'
+      load 'group.rb'
       load 'ldap.rb'
       load 'services.rb'
       load 'user.rb'

@@ -1,0 +1,104 @@
+require 'ldap'
+
+module BitServ
+class Group
+  attr_accessor :entry, :roles
+  
+  def self.group_dn group
+    "ou=#{group},ou=groups,ou=irc,#{LDAP.base}"
+  end
+  
+  def self.list
+    LDAP.search("ou=groups,ou=irc,#{LDAP.base}", {:objectclass => 'x-bit-ircGroup'}, :scope => Net::LDAP::SearchScope_SingleLevel).map{|entry| Group.new([entry]) }
+  end
+  
+  #~ def self.register username, password, attrs
+    #~ attrs[:userPassword] = `slappasswd -s #{password}`.chomp
+    #~ attrs[:objectclass] = ['x-bit-ircUser', 'top']
+    #~ attrs[:cn] ||= username
+    #~ attrs[:uid] ||= username
+    #~ 
+    #~ e = LDAP.create(LDAP.user_dn(username), attrs)
+    #~ p e # Does this return the entry?
+    #~ e && self.new(e)
+  #~ end
+  
+  def self.load group
+    entries = LDAP.search(group_dn(group), {:objectclass => 'x-bit-ircGroup'})
+    entries.any? && self.new(entries)
+  end
+  
+  def self.exists? group
+    LDAP.exists? group_dn(group)
+  end
+  
+  def initialize entries
+    @entry = entries.shift
+    @roles = entries.map{|entry| Role.new(entry) }
+  end
+  
+  def reload!
+    entries = LDAP.search(@entry.dn, {:objectclass => 'x-bit-ircGroup'})
+    @entry = entries.shift
+    @roles = entries.map{|entry| Role.new(entry) }
+  end
+  
+  def members
+    @roles.inject([]) {|list, role| list + role.members}
+  end
+  
+  def name
+    @entry['ou'].first
+  end
+  def desc
+    @entry['description'].first
+  end
+end
+
+class Role
+  attr_accessor :entry
+  
+  def self.role_dn group, role
+    "ou=#{role},#{Group.group_dn group}"
+  end
+  
+  #~ def self.register username, password, attrs
+    #~ attrs[:userPassword] = `slappasswd -s #{password}`.chomp
+    #~ attrs[:objectclass] = ['x-bit-ircUser', 'top']
+    #~ attrs[:cn] ||= username
+    #~ attrs[:uid] ||= username
+    #~ 
+    #~ e = LDAP.create(LDAP.user_dn(username), attrs)
+    #~ p e # Does this return the entry?
+    #~ e && self.new(e)
+  #~ end
+  
+  def self.load group, role
+    entry = LDAP.select role_dn(group, role)
+    entry && self.new(entry)
+  end
+  
+  def self.exists? group, role
+    LDAP.exists? role_dn(group, role)
+  end
+  
+  def initialize entry
+    @entry = entry
+  end
+  
+  def reload!
+    @entry = LDAP.select @entry.dn
+  end
+  
+  def members
+    @entry['member'] || []
+  end
+  
+  def name
+    @entry['ou'].first
+  end
+  def desc
+    @entry['description'].first
+  end
+end
+end
