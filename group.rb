@@ -12,7 +12,7 @@ class Group
     LDAP.search("ou=groups,ou=irc,#{LDAP.base}", {:objectclass => 'x-bit-ircGroup'}, :scope => Net::LDAP::SearchScope_SingleLevel).map{|entry| Group.new([entry]) }
   end
   
-  #~ def self.register username, password, attrs
+  #~ def self.register username, password, attrs={}
     #~ attrs[:userPassword] = `slappasswd -s #{password}`.chomp
     #~ attrs[:objectclass] = ['x-bit-ircUser', 'top']
     #~ attrs[:cn] ||= username
@@ -53,6 +53,20 @@ class Group
   def desc
     @entry['description'].first
   end
+  
+  def create_role name, attrs={}
+    attrs[:objectclass] = ['x-bit-ircGroup', 'top']
+    attrs[:ou] ||= name
+    attrs[:member] ||= [LDAP.user_dn('ldap_empty_group')]
+    
+    LDAP.create("ou=#{name},#{@entry.dn}", attrs)
+    
+    unless LDAP.success?
+      puts "Result: #{LDAP.ldap.get_operation_result.code}"
+      puts "Message: #{LDAP.ldap.get_operation_result.message}"
+    end
+    LDAP.success?
+  end
 end
 
 class Role
@@ -61,17 +75,6 @@ class Role
   def self.role_dn group, role
     "ou=#{role},#{Group.group_dn group}"
   end
-  
-  #~ def self.register username, password, attrs
-    #~ attrs[:userPassword] = `slappasswd -s #{password}`.chomp
-    #~ attrs[:objectclass] = ['x-bit-ircUser', 'top']
-    #~ attrs[:cn] ||= username
-    #~ attrs[:uid] ||= username
-    #~ 
-    #~ e = LDAP.create(LDAP.user_dn(username), attrs)
-    #~ p e # Does this return the entry?
-    #~ e && self.new(e)
-  #~ end
   
   def self.load group, role
     entry = LDAP.select role_dn(group, role)

@@ -12,7 +12,7 @@ module BitServ
     end
     
     def cmd_roles origin, group, action='list', *args
-      LDAP.user_bind origin.nick, password
+      LDAP.bot_bind self
       
       case action
         when 'list'
@@ -22,6 +22,14 @@ module BitServ
           end
           notice origin, "*** End Role List ***"
         
+        when 'add'
+          group = Group.load(group)
+          role = args.shift
+          if group.create_role role, :description => args.join(' ')
+            notice origin, "Created ^B#{role}^B under ^B#{group.name}^B. You may now add members."
+          else
+            notice origin, "An error occured while creating ^B#{role}^B under ^B#{group.name}^B: #{LDAP.ldap.get_operation_result.message}"
+          end
       end
     end
   end
