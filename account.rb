@@ -1,11 +1,12 @@
 require 'ldap'
+require 'escape'
 
 module BitServ
 class Account
   attr_accessor :entry
   
   def self.register username, password, attrs
-    attrs[:userPassword] = `slappasswd -s #{password}`.chomp
+    attrs[:userPassword] = `slappasswd -s #{Escape.shell_command password}`.chomp # TODO
     attrs[:objectclass] = ['x-bit-ircUser', 'top']
     attrs[:cn] ||= username
     attrs[:uid] ||= username
