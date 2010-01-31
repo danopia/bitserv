@@ -95,6 +95,14 @@ class Role
   
   def delete!
     LDAP.delete @entry.dn.first
+  end
+  
+  def add member
+    LDAP.ldap.modify :dn => @entry.dn.first, :operations => [[:add, :member, member]]
+    LDAP.success?
+  end
+  def remove member
+    LDAP.ldap.modify :dn => @entry.dn.first, :operations => [[:delete, :member, member]]
     LDAP.success?
   end
   
