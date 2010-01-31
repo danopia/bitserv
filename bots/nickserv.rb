@@ -42,6 +42,7 @@ module BitServ
     end
     
     def cmd_info origin, account=nil
+      LDAP.bot_bind self
       account ||= origin.nick
       
       if entry = Account.load(account)
