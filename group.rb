@@ -12,16 +12,33 @@ class Group
     LDAP.search("ou=groups,ou=irc,#{LDAP.base}", {:objectclass => 'x-bit-ircGroup'}, :scope => Net::LDAP::SearchScope_SingleLevel).map{|entry| Group.new([entry]) }
   end
   
-  #~ def self.register username, password, attrs={}
-    #~ attrs[:userPassword] = `slappasswd -s #{password}`.chomp
-    #~ attrs[:objectclass] = ['x-bit-ircUser', 'top']
-    #~ attrs[:cn] ||= username
-    #~ attrs[:uid] ||= username
-    #~ 
-    #~ e = LDAP.create(LDAP.user_dn(username), attrs)
-    #~ p e # Does this return the entry?
-    #~ e && self.new(e)
-  #~ end
+  def self.create name, user, attrs={}
+    attrs[:objectclass] = ['x-bit-ircGroup', 'top']
+    attrs[:ou] ||= name
+    
+    LDAP.create(group_dn(name), attrs)
+    
+    unless LDAP.success?
+      puts "Result: #{LDAP.ldap.get_operation_result.code}"
+      puts "Message: #{LDAP.ldap.get_operation_result.message}"
+      return false
+    end
+    
+    attrs = {
+      :objectclass => ['x-bit-ircGroup', 'top'],
+      :ou => 'contact',
+      :member => user.dn,
+      :description => 'Users that can manage the group'
+    }
+    
+    LDAP.create("ou=contact,#{group_dn name}", attrs)
+    
+    unless LDAP.success?
+      puts "Result: #{LDAP.ldap.get_operation_result.code}"
+      puts "Message: #{LDAP.ldap.get_operation_result.message}"
+    end
+    LDAP.success?
+  end
   
   def self.load group
     entries = LDAP.search(group_dn(group), {:objectclass => 'x-bit-ircGroup'})
@@ -66,6 +83,15 @@ class Group
       puts "Message: #{LDAP.ldap.get_operation_result.message}"
     end
     LDAP.success?
+  end
+  
+  def [] name
+    @roles.find{|role| role.name == name }
+  end
+  
+  def admin? user
+    return false unless user.account
+    self['contact'] && self['contact'].members.include?(user.dn)
   end
 end
 
